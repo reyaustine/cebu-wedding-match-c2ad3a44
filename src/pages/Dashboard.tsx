@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -7,14 +7,27 @@ import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
 import { SupplierDashboard } from "@/components/dashboard/SupplierDashboard";
 import { PlannerDashboard } from "@/components/dashboard/PlannerDashboard";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
-
-// This would come from authentication in a real app
-type UserRole = "client" | "supplier" | "planner" | "admin";
+import { getCurrentUser, UserRole } from "@/services/authService";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   // For demo purposes, we'll allow role switching
   // In a real app, this would come from auth state
   const [userRole, setUserRole] = useState<UserRole>("client");
+  const navigate = useNavigate();
+  
+  // Check if user is logged in
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (user) {
+      setUserRole(user.role);
+    } else {
+      // Redirect to login if no user is found
+      toast.error("Please log in to access the dashboard");
+      navigate("/login");
+    }
+  }, [navigate]);
 
   const renderDashboardContent = () => {
     switch (userRole) {

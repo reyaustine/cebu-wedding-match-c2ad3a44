@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Footer } from "@/components/Footer";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -53,6 +54,11 @@ const Dashboard = () => {
     if (isMobile && sidebarOpen) {
       setSidebarOpen(false);
     }
+  };
+
+  // Handle role change from sidebar (converting string to UserRole)
+  const handleRoleChange = (role: string) => {
+    setUserRole(role as UserRole);
   };
 
   if (loading) {
@@ -117,7 +123,7 @@ const Dashboard = () => {
           transition-all 
           duration-300
         `}>
-          <DashboardSidebar userRole={userRole} onRoleChange={setUserRole} />
+          <DashboardSidebar userRole={userRole} onRoleChange={handleRoleChange} />
         </div>
         
         {/* Overlay for mobile sidebar */}

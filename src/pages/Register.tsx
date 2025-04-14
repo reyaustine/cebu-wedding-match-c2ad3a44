@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { RoleSelection } from "@/components/RoleSelection";
-import { registerUser, UserRole } from "@/services/authService";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
+import { UserRole } from "@/services/authService";
 
 // Form validation schema
 const registerSchema = z.object({
@@ -34,6 +36,7 @@ const Register = () => {
   const [selectedRole, setSelectedRole] = useState<UserRole>("client");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { register } = useAuth();
   
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -62,16 +65,16 @@ const Register = () => {
   const onSubmit = async (data: RegisterFormValues) => {
     setIsSubmitting(true);
     try {
-      await registerUser(
+      await register(
         data.email,
         data.password,
         data.firstName,
         data.lastName,
-        selectedRole
+        selectedRole,
+        data.phone
       );
-      // Navigate to the appropriate dashboard based on role
-      navigate("/dashboard");
-    } catch (error) {
+      // Navigate to the dashboard is handled in the AuthContext after successful registration
+    } catch (error: any) {
       console.error("Registration error:", error);
     } finally {
       setIsSubmitting(false);
@@ -118,7 +121,11 @@ const Register = () => {
                             <FormItem>
                               <FormLabel>First Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="First name" {...field} />
+                                <Input 
+                                  placeholder="First name" 
+                                  {...field} 
+                                  disabled={isSubmitting} 
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -131,7 +138,11 @@ const Register = () => {
                             <FormItem>
                               <FormLabel>Last Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="Last name" {...field} />
+                                <Input 
+                                  placeholder="Last name" 
+                                  {...field} 
+                                  disabled={isSubmitting} 
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -146,7 +157,12 @@ const Register = () => {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="your@email.com" {...field} />
+                              <Input 
+                                type="email" 
+                                placeholder="your@email.com" 
+                                {...field} 
+                                disabled={isSubmitting} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -160,7 +176,12 @@ const Register = () => {
                           <FormItem>
                             <FormLabel>Phone Number</FormLabel>
                             <FormControl>
-                              <Input type="tel" placeholder="+63" {...field} />
+                              <Input 
+                                type="tel" 
+                                placeholder="+63" 
+                                {...field} 
+                                disabled={isSubmitting} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -174,7 +195,11 @@ const Register = () => {
                           <FormItem>
                             <FormLabel>Password</FormLabel>
                             <FormControl>
-                              <Input type="password" {...field} />
+                              <Input 
+                                type="password" 
+                                {...field} 
+                                disabled={isSubmitting} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -188,7 +213,11 @@ const Register = () => {
                           <FormItem>
                             <FormLabel>Confirm Password</FormLabel>
                             <FormControl>
-                              <Input type="password" {...field} />
+                              <Input 
+                                type="password" 
+                                {...field} 
+                                disabled={isSubmitting} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -201,7 +230,14 @@ const Register = () => {
                           className="wedding-btn w-full"
                           disabled={isSubmitting}
                         >
-                          {isSubmitting ? "Creating Account..." : "Create Account"}
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Creating Account...
+                            </>
+                          ) : (
+                            "Create Account"
+                          )}
                         </Button>
                       </div>
                     </form>

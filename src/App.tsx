@@ -11,13 +11,18 @@ import Register from "./pages/Register";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
-import { getCurrentUser } from "./services/authService";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
 // Simple route protection
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const user = getCurrentUser();
+  const { user, loading } = useAuth();
+  
+  // Show loading state if auth is still being determined
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
   
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -26,30 +31,37 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// App wrapper that provides auth context
+const AppContent = () => (
+  <Routes>
+    <Route path="/" element={<Home />} />
+    <Route path="/suppliers" element={<SupplierDirectory />} />
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
+    <Route path="/about" element={<About />} />
+    <Route 
+      path="/dashboard" 
+      element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } 
+    />
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/suppliers" element={<SupplierDirectory />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/about" element={<About />} />
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AppContent />
+        </TooltipProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

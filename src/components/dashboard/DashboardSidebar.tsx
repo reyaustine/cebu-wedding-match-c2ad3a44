@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -14,8 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-
-type UserRole = "client" | "supplier" | "planner" | "admin";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserRole } from "@/services/authService";
 
 interface DashboardSidebarProps {
   userRole: UserRole;
@@ -24,6 +24,13 @@ interface DashboardSidebarProps {
 
 export const DashboardSidebar = ({ userRole, onRoleChange }: DashboardSidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   // Define navigation items based on role
   const getNavItems = () => {
@@ -130,7 +137,11 @@ export const DashboardSidebar = ({ userRole, onRoleChange }: DashboardSidebarPro
       </div>
 
       <div className="p-4 border-t border-gray-200">
-        <Button variant="ghost" className="w-full justify-start text-gray-700 hover:text-red-600">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-gray-700 hover:text-red-600"
+          onClick={handleLogout}
+        >
           <LogOut className="mr-2" size={18} />
           {!collapsed && <span>Log Out</span>}
         </Button>

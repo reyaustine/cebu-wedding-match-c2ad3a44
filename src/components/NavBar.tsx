@@ -1,11 +1,19 @@
 
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Menu, X, LogOut, User } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-sm border-b">
@@ -29,12 +37,31 @@ export const NavBar = () => {
           <Link to="/about" className="text-sm font-medium hover:text-wedding-500 transition-colors">
             About Us
           </Link>
-          <Link to="/login" className="wedding-btn-outline">
-            Login
-          </Link>
-          <Link to="/register" className="wedding-btn">
-            Register
-          </Link>
+          
+          {user ? (
+            <>
+              <Link to="/dashboard" className="text-sm font-medium hover:text-wedding-500 transition-colors">
+                Dashboard
+              </Link>
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2 wedding-btn-outline"
+                onClick={handleLogout}
+              >
+                <LogOut size={16} />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="wedding-btn-outline">
+                Login
+              </Link>
+              <Link to="/register" className="wedding-btn">
+                Register
+              </Link>
+            </>
+          )}
         </nav>
         
         {/* Mobile menu toggle */}
@@ -75,22 +102,46 @@ export const NavBar = () => {
             >
               About Us
             </Link>
-            <div className="pt-4 flex flex-col space-y-3">
-              <Link 
-                to="/login" 
-                className="wedding-btn-outline text-center"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Login
-              </Link>
-              <Link 
-                to="/register" 
-                className="wedding-btn text-center" 
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Register
-              </Link>
-            </div>
+            
+            {user ? (
+              <>
+                <Link 
+                  to="/dashboard" 
+                  className="text-lg font-medium p-2 hover:bg-wedding-50 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center justify-center gap-2 wedding-btn-outline mt-4"
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <LogOut size={16} />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <div className="pt-4 flex flex-col space-y-3">
+                <Link 
+                  to="/login" 
+                  className="wedding-btn-outline text-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </Link>
+                <Link 
+                  to="/register" 
+                  className="wedding-btn text-center" 
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Register
+                </Link>
+              </div>
+            )}
           </nav>
         </div>
       )}

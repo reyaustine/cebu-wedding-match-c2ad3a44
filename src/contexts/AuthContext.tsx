@@ -9,7 +9,8 @@ import {
   resetPassword, 
   UserRole, 
   signInWithGoogle,
-  getUserVerificationStatus
+  getUserVerificationStatus,
+  updateUserPassword
 } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -23,6 +24,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   checkVerificationStatus: (userId: string) => Promise<string>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -159,6 +161,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return 'error';
     }
   };
+  
+  const handleUpdatePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      await updateUserPassword(currentPassword, newPassword);
+      toast.success("Password updated successfully");
+    } catch (error) {
+      console.error('Password update error:', error);
+      throw error;
+    }
+  };
 
   const value = {
     user,
@@ -169,6 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout: handleLogout,
     resetPassword: handleResetPassword,
     checkVerificationStatus,
+    updatePassword: handleUpdatePassword
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

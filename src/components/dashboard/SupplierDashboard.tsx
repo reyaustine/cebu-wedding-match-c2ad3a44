@@ -8,6 +8,8 @@ import { useState, useEffect } from "react";
 import { dbService } from "@/services/databaseService";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { where } from "firebase/firestore";
+import { Booking, ServicePackage } from "@/types/supplier";
 
 interface DashboardStats {
   pendingBookings: number;
@@ -36,13 +38,13 @@ export const SupplierDashboard = () => {
         setIsLoading(true);
         
         // Fetch pending bookings count
-        const bookings = await dbService.query('bookings', 
+        const bookings = await dbService.query<Booking>('bookings', 
           where('supplierId', '==', user.id),
           where('status', '==', 'pending')
         );
         
         // Fetch active packages count
-        const packages = await dbService.query('servicePackages', 
+        const packages = await dbService.query<ServicePackage>('servicePackages', 
           where('supplierId', '==', user.id),
           where('isActive', '==', true)
         );
@@ -56,6 +58,7 @@ export const SupplierDashboard = () => {
         
         // Count unread messages
         for (const convo of conversations) {
+          if (!convo.id) continue;
           const messages = await dbService.query(
             `conversations/${convo.id}/messages`,
             where('senderId', '!=', user.id),
@@ -65,7 +68,7 @@ export const SupplierDashboard = () => {
         }
         
         // Calculate monthly revenue (simplified for demo)
-        const completedBookings = await dbService.query('bookings',
+        const completedBookings = await dbService.query<Booking>('bookings',
           where('supplierId', '==', user.id),
           where('status', '==', 'completed'),
           where('completedAt', '>=', new Date(new Date().setDate(1))) // From 1st day of current month

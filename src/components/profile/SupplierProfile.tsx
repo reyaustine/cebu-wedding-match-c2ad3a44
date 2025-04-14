@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { where } from "firebase/firestore";
 
 import {
   Dialog,
@@ -18,7 +19,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 
@@ -88,7 +88,7 @@ export const SupplierProfile = () => {
         } else {
           const newProfile: Omit<SupplierProfileType, 'id'> = {
             userId: user.id,
-            businessName: user.businessName || `${user.firstName}'s Services`,
+            businessName: user?.firstName ? `${user.firstName}'s Services` : "My Business",
             businessDescription: "",
             contactEmail: user.email || "",
             contactPhone: user.phoneNumber || "",

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,12 +37,15 @@ export const PersonalInfoForm = ({ userId, userRole, onNext, initialData }: Pers
     setFormData(prev => ({ ...prev, [fileType]: url }));
   };
   
+  const handleDateChange = (newDate: Date | undefined) => {
+    setDate(newDate);
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      // Format the date to ISO string if available
       const dataWithDate = date 
         ? { ...formData, birthday: date.toISOString() } 
         : formData;
@@ -62,9 +64,7 @@ export const PersonalInfoForm = ({ userId, userRole, onNext, initialData }: Pers
       description="Please provide your personal details for verification"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* This section is for all users */}
         <div className="grid gap-4">
-          {/* Profile Photo */}
           <FileUpload 
             label="Profile Photo"
             userId={userId}
@@ -73,7 +73,6 @@ export const PersonalInfoForm = ({ userId, userRole, onNext, initialData }: Pers
             existingUrl={formData.avatarUrl}
           />
           
-          {/* Valid ID */}
           <FileUpload 
             label="Valid ID (Government-issued)"
             userId={userId}
@@ -82,7 +81,6 @@ export const PersonalInfoForm = ({ userId, userRole, onNext, initialData }: Pers
             existingUrl={formData.validIdUrl}
           />
           
-          {/* Selfie with ID */}
           <FileUpload 
             label="Selfie with Valid ID"
             userId={userId}
@@ -91,7 +89,6 @@ export const PersonalInfoForm = ({ userId, userRole, onNext, initialData }: Pers
             existingUrl={formData.selfieWithIdUrl}
           />
           
-          {/* Birthday */}
           <div className="space-y-2">
             <Label htmlFor="birthday">Birthday</Label>
             <Popover>
@@ -111,14 +108,15 @@ export const PersonalInfoForm = ({ userId, userRole, onNext, initialData }: Pers
                 <Calendar
                   mode="single"
                   selected={date}
-                  onSelect={setDate}
+                  onSelect={handleDateChange}
                   initialFocus
+                  fromYear={1940}
+                  toYear={new Date().getFullYear()}
                 />
               </PopoverContent>
             </Popover>
           </div>
           
-          {/* Address */}
           <div className="space-y-2">
             <Label htmlFor="address">Home Address</Label>
             <Textarea 
@@ -131,7 +129,6 @@ export const PersonalInfoForm = ({ userId, userRole, onNext, initialData }: Pers
             />
           </div>
           
-          {/* Alternative Phone - Only shown for suppliers and planners */}
           {(userRole === "supplier" || userRole === "planner") && (
             <div className="space-y-2">
               <Label htmlFor="alternativePhone">Alternative Phone Number (Optional)</Label>

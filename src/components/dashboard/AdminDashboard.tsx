@@ -1,37 +1,21 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import {
-  Users,
-  AlertTriangle,
-  CheckCircle,
-  LineChart,
-  Settings,
-  BarChart3,
-  Building,
-  FileText,
-  Bell,
-  Calendar,
-  Upload,
-  Search,
-  Check,
-  X
-} from "lucide-react";
-import { dbService } from "@/services/databaseService";
-import { useAuth } from "@/contexts/AuthContext";
-import { isSuperAdmin } from "@/services/authService";
-import { toast } from "sonner";
-import { where } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Loader2, Users, Calendar, CheckCircle, XCircle, FileText, AlertTriangle } from "lucide-react";
+import { dbService } from "@/services/databaseService";
+import { where } from "firebase/firestore";
+import { toast } from "sonner";
 
-interface StatsData {
-  totalUsers: number;
-  pendingVerifications: number;
-  reportedContent: number;
-  activeBookings: number;
+interface DashboardStat {
+  title: string;
+  value: number | string;
+  description: string;
+  icon: JSX.Element;
+  changePercent?: number;
+  isLoading?: boolean;
 }
 
 interface VerificationRequest {
@@ -60,24 +44,16 @@ interface UserData {
 }
 
 export const AdminDashboard = () => {
-  const [stats, setStats] = useState<StatsData>({
-    totalUsers: 0,
-    pendingVerifications: 0,
-    reportedContent: 0,
-    activeBookings: 0
-  });
-  const [verificationRequests, setVerificationRequests] = useState<VerificationRequest[]>([]);
+  const [stats, setStats] = useState<DashboardStat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  const { user } = useAuth();
-  const isSuperAdminUser = user ? isSuperAdmin(user.email) : false;
+  const [verificationRequests, setVerificationRequests] = useState<VerificationRequest[]>([]);
   
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAdminData = async () => {
       try {
         setIsLoading(true);
         
-        // Fetch users count
+        // Fetch users
         const users = await dbService.getAll("users");
         const totalUsers = users.length;
         
@@ -88,7 +64,7 @@ export const AdminDashboard = () => {
         
         const pendingVerifications = verifications.length;
         
-        // Enrich verification data with user information
+        // Enrich verification data with user details
         const enrichedVerifications: VerificationRequest[] = [];
         
         for (const verification of verifications) {
@@ -98,46 +74,91 @@ export const AdminDashboard = () => {
               enrichedVerifications.push({
                 ...verification,
                 userEmail: userData.email,
-                userName: userData.displayName || userData.email,
-                businessName: verification.businessInfo?.businessName || "Unknown Business"
+                userName: userData.displayName || userData.email.split('@')[0],
+                businessName: userData.businessInfo?.businessName || 'Unknown Business'
               });
             } else {
               enrichedVerifications.push(verification);
             }
           } catch (error) {
-            console.error(`Error fetching user data for ${verification.userId}:`, error);
+            console.error("Error fetching user data:", error);
             enrichedVerifications.push(verification);
           }
         }
         
+        // Fetch bookings
+        const bookings = await dbService.getAll("bookings");
+        const totalBookings = bookings.length;
+        
+        // Set dashboard stats
+        setStats([
+          {
+            title: "Total Users",
+            value: totalUsers,
+            description: "Registered users across all roles",
+            icon: <Users className="h-5 w-5 text-blue-500" />,
+            isLoading: false
+          },
+          {
+            title: "Pending Verifications",
+            value: pendingVerifications,
+            description: "Awaiting admin review",
+            icon: <FileText className="h-5 w-5 text-amber-500" />,
+            isLoading: false
+          },
+          {
+            title: "Total Bookings",
+            value: totalBookings,
+            description: "Across all suppliers",
+            icon: <Calendar className="h-5 w-5 text-green-500" />,
+            isLoading: false
+          }
+        ]);
+        
         setVerificationRequests(enrichedVerifications);
-        
-        // For now, hardcoded stats for reported content and active bookings
-        const reportedContent = 0;
-        const activeBookings = 0;
-        
-        setStats({
-          totalUsers,
-          pendingVerifications,
-          reportedContent,
-          activeBookings
-        });
       } catch (error) {
-        console.error("Error fetching admin dashboard data:", error);
-        toast.error("Failed to load dashboard data");
+        console.error("Error fetching admin data:", error);
+        toast.error("Failed to load admin dashboard data");
+        
+        // Set placeholder stats
+        setStats([
+          {
+            title: "Total Users",
+            value: "Error",
+            description: "Failed to load data",
+            icon: <AlertTriangle className="h-5 w-5 text-red-500" />,
+            isLoading: false
+          },
+          {
+            title: "Pending Verifications",
+            value: "Error",
+            description: "Failed to load data",
+            icon: <AlertTriangle className="h-5 w-5 text-red-500" />,
+            isLoading: false
+          },
+          {
+            title: "Total Bookings",
+            value: "Error",
+            description: "Failed to load data",
+            icon: <AlertTriangle className="h-5 w-5 text-red-500" />,
+            isLoading: false
+          }
+        ]);
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchData();
+    fetchAdminData();
   }, []);
-
-  const handleApproveVerification = async (id: string) => {
+  
+  const handleApproveVerification = async (id: string, userId: string) => {
     try {
-      await dbService.update("userVerifications", id, {
-        status: "approved"
-      });
+      // In a real app, we would update the verification status in Firestore
+      await dbService.update("userVerifications", id, { status: "approved" });
+      
+      // Also update the user's verification status
+      await dbService.update("users", userId, { verificationStatus: "verified" });
       
       toast.success("Verification approved successfully");
       
@@ -147,23 +168,21 @@ export const AdminDashboard = () => {
       );
       
       setVerificationRequests(updatedVerifications);
-      setStats(prev => ({
-        ...prev,
-        pendingVerifications: prev.pendingVerifications - 1
-      }));
     } catch (error) {
       console.error("Error approving verification:", error);
       toast.error("Failed to approve verification");
     }
   };
-
-  const handleRejectVerification = async (id: string) => {
+  
+  const handleRejectVerification = async (id: string, userId: string) => {
     try {
-      await dbService.update("userVerifications", id, {
-        status: "rejected"
-      });
+      // In a real app, we would update the verification status in Firestore
+      await dbService.update("userVerifications", id, { status: "rejected" });
       
-      toast.success("Verification rejected");
+      // Also update the user's verification status
+      await dbService.update("users", userId, { verificationStatus: "rejected" });
+      
+      toast.success("Verification rejected successfully");
       
       // Refetch verification requests
       const updatedVerifications = verificationRequests.map(req => 
@@ -171,10 +190,6 @@ export const AdminDashboard = () => {
       );
       
       setVerificationRequests(updatedVerifications);
-      setStats(prev => ({
-        ...prev,
-        pendingVerifications: prev.pendingVerifications - 1
-      }));
     } catch (error) {
       console.error("Error rejecting verification:", error);
       toast.error("Failed to reject verification");
@@ -182,350 +197,228 @@ export const AdminDashboard = () => {
   };
   
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-serif font-bold text-wedding-900">Admin Dashboard</h1>
-          <p className="text-gray-600">
-            {isSuperAdminUser 
-              ? "Super Admin CRM Dashboard" 
-              : "Platform management and verification center"}
-          </p>
-        </div>
-        
-        {isSuperAdminUser && (
-          <Button variant="outline" className="flex items-center gap-2">
-            <Settings size={16} />
-            System Settings
-          </Button>
-        )}
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-serif font-bold text-wedding-900 mb-2">Admin Dashboard</h1>
+        <p className="text-gray-600">Manage users, verifications, and platform activity</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Total Users</p>
-                {isLoading ? (
-                  <div className="h-8 w-24 bg-gray-200 rounded animate-pulse mt-1" />
-                ) : (
-                  <h3 className="text-3xl font-bold mt-1">{stats.totalUsers}</h3>
-                )}
-              </div>
-              <Users className="text-wedding-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Pending Verifications</p>
-                {isLoading ? (
-                  <div className="h-8 w-24 bg-gray-200 rounded animate-pulse mt-1" />
-                ) : (
-                  <h3 className="text-3xl font-bold mt-1">{stats.pendingVerifications}</h3>
-                )}
-              </div>
-              <CheckCircle className="text-wedding-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Reported Content</p>
-                {isLoading ? (
-                  <div className="h-8 w-24 bg-gray-200 rounded animate-pulse mt-1" />
-                ) : (
-                  <h3 className="text-3xl font-bold mt-1">{stats.reportedContent}</h3>
-                )}
-              </div>
-              <AlertTriangle className="text-wedding-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Active Bookings</p>
-                {isLoading ? (
-                  <div className="h-8 w-24 bg-gray-200 rounded animate-pulse mt-1" />
-                ) : (
-                  <h3 className="text-3xl font-bold mt-1">{stats.activeBookings}</h3>
-                )}
-              </div>
-              <LineChart className="text-wedding-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {isSuperAdminUser && (
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 mb-6 overflow-auto">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="verification">Verification</TabsTrigger>
-            <TabsTrigger value="content">Content</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart3 size={18} />
-                      Platform Analytics
-                    </CardTitle>
-                    <CardDescription>User registration and activity</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="h-80 flex items-center justify-center">
-                  <p className="text-gray-500">Analytics will be displayed here</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Bell size={18} />
-                      Recent Activity
-                    </CardTitle>
-                    <CardDescription>Latest platform events</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-10 text-gray-500">
-                    <p>No recent activity</p>
-                    <p className="text-sm mt-2">New activities will appear here</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>View and manage all users in the system</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-10 text-gray-500">
-                  <p>No users to display</p>
-                  <p className="text-sm mt-2">User list will appear here as they register</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="verification" className="space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {stats.map((stat, index) => (
+          <Card key={index}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Verification Requests</CardTitle>
-                  <CardDescription>Review and approve supplier verification requests</CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
-                    <Search size={14} />
-                    <span>Search</span>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="h-20 bg-gray-100 rounded-md animate-pulse" />
-                    ))}
+                  <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+                  <div className="flex items-center gap-1">
+                    {stat.isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-wedding-500" />
+                    ) : (
+                      <h2 className="text-3xl font-bold">
+                        {typeof stat.value === 'number' && stat.value >= 1000 
+                          ? `${(stat.value / 1000).toFixed(1)}K` 
+                          : stat.value}
+                      </h2>
+                    )}
                   </div>
-                ) : verificationRequests.length > 0 ? (
-                  <div className="space-y-4">
-                    {verificationRequests.map((request) => (
-                      <div key={request.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border rounded-md">
-                        <div className="flex items-center gap-3 mb-3 md:mb-0">
-                          <Avatar>
-                            <AvatarFallback>{request.userName?.substring(0, 2) || "??"}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-medium">{request.businessName || "Business"}</h3>
-                            <p className="text-sm text-gray-500">{request.userEmail}</p>
-                            <div className="flex items-center mt-1">
-                              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">
-                                {request.category || "General"}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 w-full md:w-auto">
-                          <Button 
-                            onClick={() => handleApproveVerification(request.id)} 
-                            className="flex-1 md:flex-none bg-green-100 text-green-800 hover:bg-green-200 flex items-center gap-1"
-                          >
-                            <Check size={16} />
-                            <span>Approve</span>
-                          </Button>
-                          <Button 
-                            onClick={() => handleRejectVerification(request.id)} 
-                            className="flex-1 md:flex-none bg-red-100 text-red-800 hover:bg-red-200 flex items-center gap-1"
-                          >
-                            <X size={16} />
-                            <span>Reject</span>
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-10 text-gray-500">
-                    <p>No pending verification requests</p>
-                    <p className="text-sm mt-2">New supplier verification requests will appear here</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="content" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Content Management</CardTitle>
-                <CardDescription>Manage website content and reported items</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-10 text-gray-500">
-                  <p>No content to manage</p>
-                  <p className="text-sm mt-2">Content management tools will appear here</p>
+                  <p className="text-xs text-gray-400 mt-1">{stat.description}</p>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>System Settings</CardTitle>
-                <CardDescription>Configure global platform settings</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2">
-                    <Building size={24} />
-                    <span>Business Settings</span>
-                  </Button>
-                  <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2">
-                    <FileText size={24} />
-                    <span>Content Policy</span>
-                  </Button>
-                  <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2">
-                    <Calendar size={24} />
-                    <span>Event Settings</span>
-                  </Button>
-                  <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2">
-                    <Users size={24} />
-                    <span>User Roles</span>
-                  </Button>
-                  <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2">
-                    <Upload size={24} />
-                    <span>Import/Export</span>
-                  </Button>
-                  <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2">
-                    <Settings size={24} />
-                    <span>Advanced</span>
-                  </Button>
+                <div className="rounded-full bg-gray-100 p-2">
+                  {stat.icon}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
       
-      {!isSuperAdminUser && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div>
-                <CardTitle>Verification Requests</CardTitle>
-                <CardDescription>Suppliers awaiting verification</CardDescription>
-              </div>
-              <Button variant="outline" size="sm">View All</Button>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[1, 2].map(i => (
-                    <div key={i} className="h-20 bg-gray-100 rounded-md animate-pulse" />
-                  ))}
-                </div>
-              ) : verificationRequests.length > 0 ? (
-                <div className="space-y-4">
-                  {verificationRequests.slice(0, 3).map((request) => (
-                    <div key={request.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border rounded-md">
-                      <div className="flex items-center gap-3 mb-3 md:mb-0">
-                        <Avatar>
-                          <AvatarFallback>{request.userName?.substring(0, 2) || "??"}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-medium">{request.businessName || "Business"}</h3>
-                          <p className="text-sm text-gray-500">{request.userEmail}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 w-full md:w-auto">
-                        <Button 
-                          onClick={() => handleApproveVerification(request.id)} 
-                          className="flex-1 md:flex-none bg-green-100 text-green-800 hover:bg-green-200 flex items-center gap-1"
-                        >
-                          <Check size={16} />
-                          <span>Approve</span>
-                        </Button>
-                        <Button 
-                          onClick={() => handleRejectVerification(request.id)} 
-                          className="flex-1 md:flex-none bg-red-100 text-red-800 hover:bg-red-200 flex items-center gap-1"
-                        >
-                          <X size={16} />
-                          <span>Reject</span>
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-10 text-gray-500">
-                  <p>No pending verification requests</p>
-                  <p className="text-sm mt-2">New supplier verification requests will appear here</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div>
-                <CardTitle>Recent Reports</CardTitle>
-                <CardDescription>User-reported content and issues</CardDescription>
-              </div>
-              <Button variant="outline" size="sm">View All</Button>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-10 text-gray-500">
-                <p>No reports</p>
-                <p className="text-sm mt-2">Reports from users will appear here</p>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Verification Requests */}
+      <Tabs defaultValue="pending" className="w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+          <div>
+            <h2 className="text-xl font-medium mb-1">Verification Requests</h2>
+            <p className="text-sm text-gray-500">Review and manage verification requests from suppliers and planners</p>
+          </div>
+          <TabsList>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="approved">Approved</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          </TabsList>
         </div>
-      )}
+        
+        <TabsContent value="pending">
+          {isLoading ? (
+            <div className="space-y-4">
+              {Array(3).fill(0).map((_, i) => (
+                <div key={i} className="h-28 bg-gray-100 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : verificationRequests.length > 0 ? (
+            <div className="space-y-4">
+              {verificationRequests.filter(req => req.status === "pending").map((request) => (
+                <Card key={request.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <CardTitle className="text-lg">{request.businessName || "Unknown Business"}</CardTitle>
+                      <Badge variant="outline" className="bg-yellow-100 text-yellow-800 self-start sm:self-auto">
+                        Pending
+                      </Badge>
+                    </div>
+                    <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                      <span>{request.userName || "Unknown User"}</span>
+                      {request.userEmail && (
+                        <span className="text-xs">{request.userEmail}</span>
+                      )}
+                      {request.category && (
+                        <Badge variant="outline" className="self-start sm:self-auto">
+                          {request.category}
+                        </Badge>
+                      )}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter className="pt-2">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full">
+                      <Button 
+                        onClick={() => handleApproveVerification(request.id, request.userId)}
+                        className="flex items-center gap-2 bg-green-100 text-green-800 hover:bg-green-200"
+                      >
+                        <CheckCircle size={16} />
+                        Approve
+                      </Button>
+                      <Button 
+                        onClick={() => handleRejectVerification(request.id, request.userId)}
+                        className="flex items-center gap-2 bg-red-100 text-red-800 hover:bg-red-200"
+                      >
+                        <XCircle size={16} />
+                        Reject
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="flex items-center gap-2 ml-auto"
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-4" />
+                <h3 className="text-lg font-medium mb-1">No pending verification requests</h3>
+                <p className="text-gray-500">All verification requests have been processed</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="approved">
+          {isLoading ? (
+            <div className="space-y-4">
+              {Array(2).fill(0).map((_, i) => (
+                <div key={i} className="h-28 bg-gray-100 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : verificationRequests.filter(req => req.status === "approved").length > 0 ? (
+            <div className="space-y-4">
+              {verificationRequests.filter(req => req.status === "approved").map((request) => (
+                <Card key={request.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <CardTitle className="text-lg">{request.businessName || "Unknown Business"}</CardTitle>
+                      <Badge variant="outline" className="bg-green-100 text-green-800 self-start sm:self-auto">
+                        Approved
+                      </Badge>
+                    </div>
+                    <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                      <span>{request.userName || "Unknown User"}</span>
+                      {request.userEmail && (
+                        <span className="text-xs">{request.userEmail}</span>
+                      )}
+                      {request.category && (
+                        <Badge variant="outline" className="self-start sm:self-auto">
+                          {request.category}
+                        </Badge>
+                      )}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter className="pt-2">
+                    <Button 
+                      variant="outline"
+                      className="flex items-center gap-2 ml-auto"
+                    >
+                      View Details
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <FileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium mb-1">No approved verification requests</h3>
+                <p className="text-gray-500">No verification requests have been approved yet</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="rejected">
+          {isLoading ? (
+            <div className="space-y-4">
+              {Array(2).fill(0).map((_, i) => (
+                <div key={i} className="h-28 bg-gray-100 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : verificationRequests.filter(req => req.status === "rejected").length > 0 ? (
+            <div className="space-y-4">
+              {verificationRequests.filter(req => req.status === "rejected").map((request) => (
+                <Card key={request.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <CardTitle className="text-lg">{request.businessName || "Unknown Business"}</CardTitle>
+                      <Badge variant="outline" className="bg-red-100 text-red-800 self-start sm:self-auto">
+                        Rejected
+                      </Badge>
+                    </div>
+                    <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                      <span>{request.userName || "Unknown User"}</span>
+                      {request.userEmail && (
+                        <span className="text-xs">{request.userEmail}</span>
+                      )}
+                      {request.category && (
+                        <Badge variant="outline" className="self-start sm:self-auto">
+                          {request.category}
+                        </Badge>
+                      )}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter className="pt-2">
+                    <Button 
+                      variant="outline"
+                      className="flex items-center gap-2 ml-auto"
+                    >
+                      View Details
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <FileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium mb-1">No rejected verification requests</h3>
+                <p className="text-gray-500">No verification requests have been rejected yet</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

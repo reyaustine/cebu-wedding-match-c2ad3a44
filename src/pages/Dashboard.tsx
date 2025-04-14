@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Footer } from "@/components/Footer";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -131,7 +130,7 @@ const Dashboard = () => {
         
         {/* Main content area */}
         <div 
-          className="flex-grow p-4 md:p-6 bg-gray-50 min-h-[calc(100vh-4rem)] w-full"
+          className="flex-grow p-4 md:p-6 bg-gray-50 min-h-[calc(100vh-4rem)] w-full overflow-y-auto"
           onClick={closeSidebar}
         >
           {renderDashboardContent()}

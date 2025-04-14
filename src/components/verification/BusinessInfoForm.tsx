@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import { VerificationStep } from "./VerificationStep";
 import { FileUpload } from "./FileUpload";
 import { BusinessInfo } from "@/services/authService";
 import { Loader2 } from "lucide-react";
+import { formatUrl } from "@/lib/utils";
 
 interface BusinessInfoFormProps {
   userId: string;
@@ -38,7 +38,13 @@ export const BusinessInfoForm = ({ userId, onNext, onBack, initialData }: Busine
     setIsLoading(true);
     
     try {
-      onNext(formData);
+      const formattedData = {
+        ...formData,
+        facebookPageUrl: formatUrl(formData.facebookPageUrl),
+        facebookProfileUrl: formatUrl(formData.facebookProfileUrl)
+      };
+      
+      onNext(formattedData);
     } catch (error) {
       console.error("Form submission error:", error);
     } finally {
@@ -124,10 +130,10 @@ export const BusinessInfoForm = ({ userId, onNext, onBack, initialData }: Busine
             <Input 
               id="facebookPageUrl" 
               name="facebookPageUrl"
-              type="url"
+              type="text"
               value={formData.facebookPageUrl || ""}
               onChange={handleChange}
-              placeholder="https://facebook.com/yourbusiness"
+              placeholder="facebook.com/yourbusiness"
               required
             />
           </div>
@@ -138,10 +144,10 @@ export const BusinessInfoForm = ({ userId, onNext, onBack, initialData }: Busine
             <Input 
               id="facebookProfileUrl" 
               name="facebookProfileUrl"
-              type="url"
+              type="text"
               value={formData.facebookProfileUrl || ""}
               onChange={handleChange}
-              placeholder="https://facebook.com/yourname"
+              placeholder="facebook.com/yourname"
               required
             />
           </div>

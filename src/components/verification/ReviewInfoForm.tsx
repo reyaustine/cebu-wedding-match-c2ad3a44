@@ -50,6 +50,16 @@ export const ReviewInfoForm = ({
     }
   };
   
+  // Format URL for display (removes protocol for cleaner view)
+  const formatUrlForDisplay = (url?: string): string => {
+    if (!url) return "Not provided";
+    try {
+      return url.replace(/^https?:\/\/(www\.)?/i, '');
+    } catch (e) {
+      return url;
+    }
+  };
+  
   return (
     <VerificationStep
       title="Review Your Information"
@@ -154,8 +164,8 @@ export const ReviewInfoForm = ({
                 <div className="grid grid-cols-3">
                   <span className="text-muted-foreground">Social Links</span>
                   <div className="col-span-2 space-y-1">
-                    <div>Facebook Page: {businessInfo.facebookPageUrl}</div>
-                    <div>Facebook Profile: {businessInfo.facebookProfileUrl}</div>
+                    <div>Facebook Page: {formatUrlForDisplay(businessInfo.facebookPageUrl)}</div>
+                    <div>Facebook Profile: {formatUrlForDisplay(businessInfo.facebookProfileUrl)}</div>
                   </div>
                 </div>
                 

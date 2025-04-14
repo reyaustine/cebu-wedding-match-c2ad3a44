@@ -13,6 +13,8 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import Verification from "./pages/Verification";
 import OnboardingStatus from "./pages/OnboardingStatus";
+import Profile from "./pages/Profile";
+import Messages from "./pages/Messages";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
@@ -118,6 +120,22 @@ const AppContent = () => (
       element={
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      } 
+    />
+    <Route 
+      path="/profile" 
+      element={
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      } 
+    />
+    <Route 
+      path="/messages" 
+      element={
+        <ProtectedRoute>
+          <Messages />
         </ProtectedRoute>
       } 
     />

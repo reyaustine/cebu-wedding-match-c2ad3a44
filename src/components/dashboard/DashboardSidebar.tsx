@@ -1,211 +1,189 @@
 
-import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import {
-  LayoutDashboard,
-  Calendar,
-  MessageSquare,
-  Package,
-  Users,
-  Settings,
-  LogOut,
-  Bell,
-  ChevronLeft,
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { 
+  Home, 
+  Calendar, 
+  MessageSquare, 
+  Settings, 
+  LogOut, 
   ChevronRight,
-  Home,
   Search,
   User,
+  UserCircle2,
+  Users,
+  Store,
+  HeartHandshake,
+  Bell,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/services/authService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 
 interface DashboardSidebarProps {
-  userRole: UserRole;
-  onRoleChange: (role: UserRole) => void;
+  userRole: string;
+  onRoleChange?: (role: string) => void;
 }
 
 export const DashboardSidebar = ({ userRole, onRoleChange }: DashboardSidebarProps) => {
-  const [collapsed, setCollapsed] = useState(false);
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
-  const isMobile = useIsMobile();
+  const isSuperAdmin = user?.email === "reyaustine123@gmail.com";
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  };
+
+  const getNavItemClass = (path: string) => {
+    const isActive = location.pathname === path;
+    return `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+      isActive 
+        ? "bg-wedding-100 text-wedding-800" 
+        : "hover:bg-gray-100"
+    }`;
+  };
+
+  // NavItem component for cleaner code
+  const NavItem = ({ 
+    icon: Icon, 
+    label, 
+    to, 
+    count 
+  }: { 
+    icon: any; 
+    label: string; 
+    to: string;
+    count?: number;
+  }) => (
+    <li>
+      <Link to={to} className={getNavItemClass(to)}>
+        <Icon size={20} />
+        <span>{label}</span>
+        {count !== undefined && count > 0 && (
+          <span className="ml-auto bg-wedding-500 text-white text-xs px-2 py-1 rounded-full">
+            {count}
+          </span>
+        )}
+      </Link>
+    </li>
+  );
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/');
-  };
-
-  // Define navigation items based on role
-  const getNavItems = () => {
-    const commonItems = [
-      { 
-        icon: userRole === "client" ? <Home size={20} /> : <LayoutDashboard size={20} />, 
-        label: userRole === "client" ? "Home" : "Dashboard", 
-        path: userRole === "client" ? "/" : "/dashboard" 
-      },
-    ];
-    
-    if (userRole !== "client") {
-      commonItems.push(
-        { icon: <MessageSquare size={20} />, label: "Messages", path: "/dashboard/messages" },
-        { icon: <Bell size={20} />, label: "Notifications", path: "/dashboard/notifications" }
-      );
+    try {
+      await logout();
+      toast.success("You've been logged out");
+    } catch (error) {
+      toast.error("Failed to log out");
     }
-
-    const roleSpecificItems = {
-      client: [
-        { icon: <Calendar size={20} />, label: "My Bookings", path: "/dashboard" },
-        { icon: <Search size={20} />, label: "Find Suppliers", path: "/suppliers" },
-        { icon: <MessageSquare size={20} />, label: "Messages", path: "/dashboard/messages" },
-        { icon: <User size={20} />, label: "My Profile", path: "/dashboard/profile" },
-      ],
-      supplier: [
-        { icon: <Calendar size={20} />, label: "Bookings", path: "/dashboard/bookings" },
-        { icon: <Package size={20} />, label: "Packages", path: "/dashboard/packages" },
-        { icon: <Users size={20} />, label: "Clients", path: "/dashboard/clients" },
-      ],
-      planner: [
-        { icon: <Calendar size={20} />, label: "Events", path: "/dashboard/events" },
-        { icon: <Users size={20} />, label: "Clients", path: "/dashboard/clients" },
-        { icon: <Package size={20} />, label: "Suppliers", path: "/dashboard/suppliers" },
-      ],
-      admin: [
-        { icon: <Users size={20} />, label: "Users", path: "/dashboard/users" },
-        { icon: <Calendar size={20} />, label: "Bookings", path: "/dashboard/bookings" },
-        { icon: <Package size={20} />, label: "Verifications", path: "/dashboard/verifications" },
-      ],
-    };
-    
-    const allItems = [...commonItems];
-    
-    // Add role specific items
-    if (roleSpecificItems[userRole]) {
-      // Filter out duplicates for client role (since we've moved some to common)
-      if (userRole === "client") {
-        allItems.push(...roleSpecificItems[userRole].filter(
-          item => !commonItems.some(common => common.label === item.label)
-        ));
-      } else {
-        allItems.push(...roleSpecificItems[userRole]);
-      }
-    }
-    
-    // Add settings last
-    if (userRole !== "client") {
-      allItems.push({ icon: <Settings size={20} />, label: "Settings", path: "/dashboard/settings" });
-    }
-
-    return allItems;
   };
-
-  const navItems = getNavItems();
-
-  // For demonstration purposes only - role switching
-  const roleOptions = [
-    { value: "client", label: "Client" },
-    { value: "supplier", label: "Supplier" },
-    { value: "planner", label: "Wedding Planner" },
-    { value: "admin", label: "Admin" },
-  ];
-
-  // Check if a path is active
-  const isActivePath = (path: string) => {
-    if (path === "/" && location.pathname === "/") return true;
-    if (path !== "/" && location.pathname.startsWith(path)) return true;
-    return false;
-  };
-
-  // Get display name or email from user
-  const displayName = user?.email ? (user.email.split('@')[0] || 'User') : 'User';
-  const avatarFallback = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex flex-col h-full">
-      {/* User profile section */}
+    <aside className="w-full h-full md:w-64 bg-white border-r border-gray-200 flex flex-col">
+      {/* User Profile Section */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarFallback>{avatarFallback}</AvatarFallback>
-            {user?.photoURL && <AvatarImage src={user.photoURL} alt={displayName} />}
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={user?.photoURL || ""} alt={user?.firstName || "User"} />
+            <AvatarFallback>
+              {user?.firstName ? getInitials(`${user.firstName} ${user.lastName}`) : "U"}
+            </AvatarFallback>
           </Avatar>
-          {!collapsed && (
-            <div className="flex-grow">
-              <p className="font-medium truncate">{displayName}</p>
-              <p className="text-xs text-gray-500">
-                {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Account
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Navigation links */}
-      <div className="flex-grow p-3 overflow-y-auto">
-        <nav className="space-y-1">
-          {navItems.map((item, index) => (
-            <Link
-              key={index}
-              to={item.path}
-              className={`flex items-center px-3 py-2 rounded-md 
-              ${isActivePath(item.path) 
-                ? "bg-wedding-50 text-wedding-700" 
-                : "text-gray-700 hover:bg-wedding-50 hover:text-wedding-700"
-              }`}
-            >
-              <span className="mr-3">{item.icon}</span>
-              {!collapsed && <span className="text-sm">{item.label}</span>}
-            </Link>
-          ))}
-        </nav>
-      </div>
-
-      {/* Demo role switcher - would not be in production */}
-      {!isMobile && (
-        <div className={`p-4 border-t border-gray-200 ${collapsed ? "hidden" : ""}`}>
-          <div className="mb-2 text-xs text-gray-500">Demo: Switch Role</div>
-          <div className="grid grid-cols-2 gap-2">
-            {roleOptions.map((role) => (
-              <Button
-                key={role.value}
-                variant={userRole === role.value ? "default" : "outline"}
-                size="sm"
-                className={userRole === role.value ? "bg-wedding-500 hover:bg-wedding-600" : ""}
-                onClick={() => onRoleChange(role.value as UserRole)}
-              >
-                {role.label}
-              </Button>
-            ))}
+          <div className="flex-grow min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {user?.firstName ? `${user.firstName} ${user.lastName}` : user?.email}
+            </p>
+            <p className="text-xs text-gray-500 capitalize truncate">
+              {userRole}
+            </p>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Logout button */}
+      {/* Navigation */}
+      <nav className="flex-grow p-4 overflow-y-auto">
+        <ul className="space-y-1">
+          {/* Common Navigation Items */}
+          <NavItem icon={Home} label="Dashboard" to="/dashboard" />
+          
+          {/* Role-specific Navigation Items */}
+          {userRole === "client" && (
+            <>
+              <NavItem icon={Search} label="Find Suppliers" to="/suppliers" />
+              <NavItem icon={Calendar} label="My Bookings" to="/bookings" />
+              <NavItem icon={MessageSquare} label="Messages" to="/messages" count={3} />
+              <NavItem icon={UserCircle2} label="My Profile" to="/profile" />
+            </>
+          )}
+          
+          {userRole === "supplier" && (
+            <>
+              <NavItem icon={Calendar} label="Bookings" to="/bookings" />
+              <NavItem icon={MessageSquare} label="Messages" to="/messages" count={5} />
+              <NavItem icon={Store} label="My Services" to="/services" />
+              <NavItem icon={UserCircle2} label="Business Profile" to="/profile" />
+            </>
+          )}
+          
+          {userRole === "planner" && (
+            <>
+              <NavItem icon={Calendar} label="Bookings" to="/bookings" />
+              <NavItem icon={MessageSquare} label="Messages" to="/messages" />
+              <NavItem icon={HeartHandshake} label="My Services" to="/services" />
+              <NavItem icon={UserCircle2} label="Business Profile" to="/profile" />
+            </>
+          )}
+          
+          {userRole === "admin" && (
+            <>
+              <NavItem icon={Users} label="User Management" to="/users" />
+              <NavItem icon={Bell} label="Verifications" to="/verifications" count={2} />
+              <NavItem icon={Store} label="Suppliers" to="/suppliers-management" />
+              <NavItem icon={MessageSquare} label="Support Chats" to="/messages" count={4} />
+              <NavItem icon={Settings} label="Settings" to="/settings" />
+            </>
+          )}
+        </ul>
+
+        {/* Role Switcher - Only for super admin */}
+        {isSuperAdmin && onRoleChange && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-xs font-medium text-gray-500 mb-2">Demo: Switch Role</p>
+            <div className="space-y-1">
+              {["client", "supplier", "planner", "admin"].map((role) => (
+                <button
+                  key={role}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg ${
+                    userRole === role
+                      ? "bg-wedding-100 text-wedding-800"
+                      : "hover:bg-gray-100"
+                  }`}
+                  onClick={() => onRoleChange(role)}
+                >
+                  <span className="capitalize">{role}</span>
+                  {userRole === role && <ChevronRight size={16} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </nav>
+      
+      {/* Logout Button */}
       <div className="p-4 border-t border-gray-200">
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-gray-700 hover:text-red-600"
+          className="w-full flex items-center justify-start gap-3 hover:bg-gray-100 hover:text-red-600"
           onClick={handleLogout}
         >
-          <LogOut className="mr-2" size={18} />
-          {!collapsed && <span>Log Out</span>}
+          <LogOut size={20} />
+          <span>Log out</span>
         </Button>
       </div>
-      
-      {/* Collapse button - hide on mobile */}
-      {!isMobile && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute -right-3 top-8 bg-white border border-gray-200 rounded-full shadow-sm hidden md:flex"
-          onClick={() => setCollapsed(!collapsed)}
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </Button>
-      )}
-    </div>
+    </aside>
   );
 };

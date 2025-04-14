@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from "yup";
 import { Input } from "@/components/ui/input";
@@ -11,31 +11,31 @@ import { toast } from "sonner";
 import { dbService } from "@/services/databaseService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { ServicePackage } from "@/types/supplier";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
-import { InputWithCopyButton } from "@/components/ui/input-with-copy-button";
 import { MultiImageUploader } from "@/components/ui/multi-image-uploader";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ServicePackage } from "@/types/supplier";
 
-// Define the schema for form validation
+// Define the schema for form validation - match it with ServicePackage interface
 const schema = yup.object({
   name: yup.string().required("Package name is required"),
   description: yup.string().required("Description is required"),
   price: yup.number().required("Price is required").positive("Price must be positive"),
   category: yup.string().required("Category is required"),
   features: yup.array().of(yup.string()).required("At least one feature is required").min(1, "At least one feature is required"),
-  images: yup.array().of(yup.string()).optional(),
+  images: yup.array().of(yup.string()).optional()
 }).required();
 
-interface PackageFormProps {
-  packageId?: string;
-  isEditMode?: boolean;
-}
+// Create a type for form data that matches the schema
+type PackageFormData = yup.InferType<typeof schema>;
 
-export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
+export const PackageForm = ({ 
+  packageId, 
+  isEditMode 
+}: { 
+  packageId?: string; 
+  isEditMode: boolean;
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formValues, setFormValues] = useState<ServicePackage>({
     id: '',
@@ -48,14 +48,22 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
     images: [],
     isActive: true,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   });
+
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<ServicePackage>({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<PackageFormData>({
     resolver: yupResolver(schema),
-    defaultValues: formValues
+    defaultValues: {
+      name: formValues.name,
+      description: formValues.description,
+      price: formValues.price,
+      category: formValues.category,
+      features: formValues.features,
+      images: formValues.images
+    }
   });
 
   useEffect(() => {
@@ -72,7 +80,7 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
             setValue('price', packageData.price);
             setValue('category', packageData.category);
             setValue('features', packageData.features);
-            setValue('images', packageData.images || []);
+            setValue('images', packageData.images);
           } else {
             toast.error("Package not found");
             navigate('/services');
@@ -84,30 +92,30 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
           setIsLoading(false);
         }
       };
+
       fetchPackage();
     }
   }, [isEditMode, packageId, setValue, navigate]);
 
-  const onSubmit = async (data: ServicePackage) => {
+  const onSubmit = async (data: PackageFormData) => {
     if (!user) {
       toast.error("You must be logged in to create a package");
       return;
     }
 
     setIsLoading(true);
-
     try {
-      const packageData: Omit<ServicePackage, 'id'> = {
+      const packageData = {
         supplierId: user.id,
         name: data.name,
         description: data.description,
         price: data.price,
         category: data.category,
-        features: Array.isArray(data.features) ? data.features : [data.features].filter(Boolean),
-        images: Array.isArray(data.images) ? data.images : [],
+        features: data.features,
+        images: data.images || [],
         isActive: true,
         createdAt: isEditMode ? formValues.createdAt : new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
 
       if (isEditMode && packageId) {
@@ -117,7 +125,6 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
         await dbService.add('servicePackages', packageData);
         toast.success("Package created successfully");
       }
-
       navigate('/services');
     } catch (error) {
       console.error("Error creating/updating package:", error);
@@ -128,23 +135,37 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
   };
 
   const handleAddFeature = () => {
-    setFormValues({ ...formValues, features: [...formValues.features, ''] });
+    setFormValues({
+      ...formValues,
+      features: [...formValues.features, '']
+    });
   };
 
   const handleRemoveFeature = (index: number) => {
     const newFeatures = [...formValues.features];
     newFeatures.splice(index, 1);
-    setFormValues({ ...formValues, features: newFeatures });
+    setFormValues({
+      ...formValues,
+      features: newFeatures
+    });
   };
 
   const handleFeatureChange = (index: number, value: string) => {
     const newFeatures = [...formValues.features];
     newFeatures[index] = value;
-    setFormValues({ ...formValues, features: newFeatures });
+    setFormValues({
+      ...formValues,
+      features: newFeatures
+    });
   };
 
   const handleImageUpload = (images: string[]) => {
-    setFormValues({ ...formValues, images: images });
+    setFormValues({
+      ...formValues,
+      images: images
+    });
+    // Also update the form value
+    setValue('images', images);
   };
 
   if (isLoading) {
@@ -169,7 +190,7 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
               <Label htmlFor="name">Package Name</Label>
-              <Input id="name" type="text"  {...register("name")} defaultValue={formValues.name} />
+              <Input id="name" type="text" {...register("name")} defaultValue={formValues.name} />
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
             </div>
 
@@ -201,12 +222,23 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
                     onChange={(e) => handleFeatureChange(index, e.target.value)}
                     className="flex-grow"
                   />
-                  <Button type="button" variant="outline" size="icon" className="text-red-500" onClick={() => handleRemoveFeature(index)}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V6"/><path d="M8 6V4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="text-red-500"
+                    onClick={() => handleRemoveFeature(index)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V6"></path><path d="M8 6V4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
                   </Button>
                 </div>
               ))}
-              <Button type="button" variant="secondary" size="sm" onClick={handleAddFeature}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleAddFeature}
+              >
                 Add Feature
               </Button>
               {errors.features && <p className="text-red-500 text-sm mt-1">{errors.features.message}</p>}
@@ -214,11 +246,22 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
 
             <div>
               <Label>Images</Label>
-              <MultiImageUploader onUpload={handleImageUpload} initialImages={formValues.images} />
+              <MultiImageUploader 
+                onUpload={handleImageUpload}
+                initialImages={formValues.images}
+              />
             </div>
 
-            <Button type="submit" className="wedding-btn" disabled={isLoading}>
-              {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : (isEditMode ? "Update Package" : "Create Package")}
+            <Button
+              type="submit"
+              className="wedding-btn"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                </>
+              ) : isEditMode ? "Update Package" : "Create Package"}
             </Button>
           </form>
         </CardContent>

@@ -1,62 +1,60 @@
 
-import { FC, useState, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "./button";
-import { Input } from "./input";
-import { Label } from "./label";
-import { Plus, X, ImageIcon, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { storageService } from "@/services/storageService";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+import { X, Upload, Image as ImageIcon } from "lucide-react";
 
 interface MultiImageUploaderProps {
-  onUpload: (urls: string[]) => void;
+  onUpload: (imageUrls: string[]) => void;
   initialImages?: string[];
   maxImages?: number;
 }
 
-export const MultiImageUploader: FC<MultiImageUploaderProps> = ({
+export const MultiImageUploader = ({
   onUpload,
   initialImages = [],
   maxImages = 5,
-}) => {
-  const [imageUrls, setImageUrls] = useState<string[]>(initialImages || []);
+}: MultiImageUploaderProps) => {
+  const [images, setImages] = useState<string[]>(initialImages || []);
   const [isUploading, setIsUploading] = useState(false);
   const { user } = useAuth();
-
+  
+  // Update local state when initialImages changes
   useEffect(() => {
     if (initialImages) {
-      setImageUrls(initialImages);
+      setImages(initialImages);
     }
   }, [initialImages]);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user) {
-      toast.error("You must be logged in to upload images");
-      return;
-    }
-
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    if (imageUrls.length + files.length > maxImages) {
-      toast.error(`You can upload maximum ${maxImages} images`);
-      return;
-    }
-
+  // Handle file upload
+  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || !user) return;
+    
     setIsUploading(true);
-
+    
     try {
-      const newUrls: string[] = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const url = await storageService.uploadImage(file, `services/${user.id}`);
-        newUrls.push(url);
+      // Check if adding more images would exceed the limit
+      if (images.length + files.length > maxImages) {
+        toast.error(`You can only upload up to ${maxImages} images`);
+        return;
       }
       
-      const updatedUrls = [...imageUrls, ...newUrls];
-      setImageUrls(updatedUrls);
-      onUpload(updatedUrls);
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExtension = file.name.split('.').pop();
+        // Generate a unique file path
+        const filePath = `packages/${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
+        // Upload using the uploadFile method from storageService
+        return storageService.uploadFile(filePath, file);
+      });
+      
+      const uploadedUrls = await Promise.all(uploadPromises);
+      const newImages = [...images, ...uploadedUrls];
+      
+      setImages(newImages);
+      onUpload(newImages);
       toast.success("Images uploaded successfully");
     } catch (error) {
       console.error("Error uploading images:", error);
@@ -64,66 +62,72 @@ export const MultiImageUploader: FC<MultiImageUploaderProps> = ({
     } finally {
       setIsUploading(false);
     }
-  };
+  }, [images, maxImages, onUpload, user]);
 
-  const handleRemoveImage = (index: number) => {
-    const updatedUrls = [...imageUrls];
-    updatedUrls.splice(index, 1);
-    setImageUrls(updatedUrls);
-    onUpload(updatedUrls);
-  };
+  // Handle image deletion
+  const handleRemoveImage = useCallback(async (indexToRemove: number) => {
+    try {
+      // Optionally delete from storage
+      // await storageService.deleteFile(images[indexToRemove]);
+      
+      const newImages = images.filter((_, index) => index !== indexToRemove);
+      setImages(newImages);
+      onUpload(newImages);
+      toast.success("Image removed");
+    } catch (error) {
+      toast.error("Failed to remove image");
+    }
+  }, [images, onUpload]);
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-        {imageUrls.map((url, index) => (
-          <div key={index} className="relative aspect-square rounded-md overflow-hidden border">
-            <img
-              src={url}
-              alt={`Uploaded image ${index + 1}`}
-              className="h-full w-full object-cover"
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+        {images.map((imageUrl, index) => (
+          <div key={index} className="relative aspect-square border rounded-md overflow-hidden group">
+            <img 
+              src={imageUrl} 
+              alt={`Uploaded ${index + 1}`} 
+              className="w-full h-full object-cover"
             />
             <Button
               type="button"
               variant="destructive"
               size="icon"
-              className="absolute top-1 right-1 h-6 w-6 rounded-full"
+              className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={() => handleRemoveImage(index)}
             >
-              <X className="h-4 w-4" />
+              <X size={14} />
             </Button>
           </div>
         ))}
-
-        {imageUrls.length < maxImages && (
-          <div className="border border-dashed rounded-md flex items-center justify-center aspect-square relative overflow-hidden">
-            <Label
-              htmlFor="image-upload"
-              className="flex flex-col items-center justify-center w-full h-full cursor-pointer"
-            >
-              {isUploading ? (
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-              ) : (
-                <>
-                  <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
-                  <span className="text-xs text-gray-500">Add Image</span>
-                </>
-              )}
-            </Label>
-            <Input
-              id="image-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleUpload}
-              className="hidden"
-              disabled={isUploading}
+        
+        {images.length < maxImages && (
+          <label className="cursor-pointer border-2 border-dashed rounded-md aspect-square flex flex-col items-center justify-center hover:bg-gray-50 transition-colors">
+            <input 
+              type="file" 
+              accept="image/*" 
               multiple={true}
+              onChange={handleFileUpload}
+              className="sr-only"
+              disabled={isUploading}
             />
-          </div>
+            {isUploading ? (
+              <div className="flex flex-col items-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-wedding-500"></div>
+                <p className="text-xs text-gray-500 mt-2">Uploading...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <Upload size={24} className="text-gray-400" />
+                <p className="text-xs text-gray-500 mt-2">Upload Image</p>
+              </div>
+            )}
+          </label>
         )}
       </div>
+      
       <p className="text-xs text-gray-500">
-        Upload up to {maxImages} images. Recommended size: 800x600px.
+        Upload up to {maxImages} images. Recommended size: 1200x800px.
       </p>
     </div>
   );

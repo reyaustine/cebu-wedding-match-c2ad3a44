@@ -1,4 +1,7 @@
 
+// Add ServicePackage interface if it doesn't exist
+import { Timestamp } from "firebase/firestore";
+
 export interface ServicePackage {
   id: string;
   supplierId: string;
@@ -9,20 +12,20 @@ export interface ServicePackage {
   features: string[];
   images: string[];
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | Timestamp;
+  updatedAt: Date | Timestamp;
 }
 
 export interface Booking {
   id: string;
-  packageId: string;
-  supplierId: string;
   clientId: string;
+  supplierId: string;
   clientName: string;
+  packageId: string;
   packageName: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   date: Date;
   amount: number;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   notes?: string;
   createdAt: Date;
   updatedAt: Date;

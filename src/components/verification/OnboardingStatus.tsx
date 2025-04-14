@@ -1,8 +1,9 @@
 
-import { CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock, LogOut } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface OnboardingStatusProps {
   userRole: string;
@@ -10,6 +11,12 @@ interface OnboardingStatusProps {
 
 export const OnboardingStatus = ({ userRole }: OnboardingStatusProps) => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
   
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -64,10 +71,11 @@ export const OnboardingStatus = ({ userRole }: OnboardingStatusProps) => {
         
         <Button 
           variant="outline" 
-          onClick={() => navigate("/login")}
-          className="mt-4"
+          onClick={handleLogout}
+          className="mt-4 flex items-center gap-2"
         >
-          Return to Login
+          <LogOut className="h-4 w-4" />
+          Logout Now
         </Button>
       </CardContent>
     </Card>

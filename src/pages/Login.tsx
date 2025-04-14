@@ -12,6 +12,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 // Form validation schema
 const loginSchema = z.object({
@@ -55,6 +57,16 @@ const Login = () => {
               <CardDescription>Sign in to your TheWeddingMatch account</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Google Sign-In Button */}
+              <GoogleSignInButton className="mb-6" />
+              
+              <div className="relative my-4">
+                <Separator />
+                <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-gray-500">
+                  OR
+                </span>
+              </div>
+            
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField

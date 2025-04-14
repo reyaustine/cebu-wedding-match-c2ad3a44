@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChange, User, loginUser, registerUser, logoutUser, resetPassword, UserRole } from '@/services/authService';
+import { onAuthStateChange, User, loginUser, registerUser, logoutUser, resetPassword, UserRole, signInWithGoogle } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, firstName: string, lastName: string, role: UserRole, phone?: string) => Promise<void>;
+  googleSignIn: (defaultRole?: UserRole) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }
@@ -37,6 +38,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async (defaultRole: UserRole = "client") => {
+    setLoading(true);
+    try {
+      const user = await signInWithGoogle(defaultRole);
+      setUser(user);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Google sign-in error:', error);
     } finally {
       setLoading(false);
     }
@@ -85,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     loading,
     login: handleLogin,
+    googleSignIn: handleGoogleSignIn,
     register: handleRegister,
     logout: handleLogout,
     resetPassword: handleResetPassword,

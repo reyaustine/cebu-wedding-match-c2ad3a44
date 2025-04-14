@@ -7,7 +7,11 @@ import {
   sendEmailVerification,
   updateProfile,
   User as FirebaseUser,
-  onAuthStateChanged
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult
 } from "firebase/auth";
 import { 
   doc, 
@@ -41,6 +45,9 @@ const SUPER_ADMIN_EMAIL = "reyaustine123@gmail.com";
 
 // Current user state
 let currentUser: User | null = null;
+
+// Google authentication provider
+const googleProvider = new GoogleAuthProvider();
 
 // Register a new user
 export const registerUser = async (
@@ -139,6 +146,81 @@ export const loginUser = async (email: string, password: string): Promise<User> 
       error.message || 'Login failed';
       
     toast.error(errorMessage);
+    throw error;
+  }
+};
+
+// Google sign-in (handles both sign-in and sign-up)
+export const signInWithGoogle = async (defaultRole: UserRole = "client"): Promise<User> => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    const { user: firebaseUser } = result;
+    
+    // Check if user exists in Firestore
+    const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+    
+    if (userDoc.exists()) {
+      // User exists, perform login
+      const userData = userDoc.data() as User;
+      
+      // Set current user
+      currentUser = {
+        ...userData,
+        id: firebaseUser.uid,
+        isVerified: firebaseUser.emailVerified || userData.isVerified || 
+                    firebaseUser.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
+      };
+      
+      // Update last login
+      await updateDoc(doc(db, "users", firebaseUser.uid), {
+        lastLogin: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      
+      toast.success(`Welcome back, ${userData.firstName}!`);
+      return currentUser;
+      
+    } else {
+      // User doesn't exist, create a new user
+      const nameParts = firebaseUser.displayName?.split(' ') || ['User'];
+      const firstName = nameParts[0];
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      
+      // Check if user is the super admin
+      const isAdmin = firebaseUser.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+      const actualRole = isAdmin ? "admin" : defaultRole;
+      
+      // Create user document in Firestore
+      const newUser: User = {
+        id: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        firstName,
+        lastName,
+        role: actualRole,
+        isVerified: isAdmin || firebaseUser.emailVerified, 
+        phoneNumber: firebaseUser.phoneNumber || "",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        photoURL: firebaseUser.photoURL || ""
+      };
+      
+      await setDoc(doc(db, "users", firebaseUser.uid), {
+        ...newUser,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      
+      // Update the current user state
+      currentUser = newUser;
+      
+      toast.success(`Account created successfully!`);
+      return newUser;
+    }
+    
+  } catch (error: any) {
+    if (error.code !== 'auth/cancelled-popup-request') {
+      toast.error(error.message || "Google sign-in failed");
+    }
     throw error;
   }
 };

@@ -15,6 +15,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 import { UserRole } from "@/services/authService";
+import { Separator } from "@/components/ui/separator";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 // Form validation schema
 const registerSchema = z.object({
@@ -100,13 +102,26 @@ const Register = () => {
                 <div className="space-y-6">
                   <h3 className="text-lg font-medium text-center">Select Your Role</h3>
                   <RoleSelection onRoleSelect={handleRoleSelect} />
-                  <div className="flex justify-center mt-8">
+                  
+                  <div className="flex flex-col items-center mt-8 space-y-6 max-w-sm mx-auto">
                     <Button 
-                      className="wedding-btn px-8"
+                      className="wedding-btn w-full"
                       onClick={handleContinue}
                     >
-                      Continue
+                      Continue with Email
                     </Button>
+                    
+                    <div className="relative w-full">
+                      <Separator />
+                      <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-gray-500">
+                        OR
+                      </span>
+                    </div>
+                    
+                    <GoogleSignInButton 
+                      defaultRole={selectedRole} 
+                      mode="signup"
+                    />
                   </div>
                 </div>
               ) : (

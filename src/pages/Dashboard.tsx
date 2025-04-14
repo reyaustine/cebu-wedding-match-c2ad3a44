@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
@@ -26,6 +25,16 @@ const Dashboard = () => {
     
     if (user) {
       setUserRole(user.role as UserRole);
+      
+      // Check if user should be on verification or onboarding page
+      const status = user.verificationStatus;
+      if (status === "unverified") {
+        navigate(`/verification/${user.id}`);
+        return;
+      } else if (status === "onboarding") {
+        navigate("/onboarding-status");
+        return;
+      }
     } else {
       // Redirect to login if no user is found
       toast.error("Please log in to access the dashboard");
@@ -36,7 +45,6 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <NavBar />
         <main className="flex-grow flex items-center justify-center">
           <div className="flex flex-col items-center">
             <Loader2 className="h-8 w-8 animate-spin text-wedding-500" />
@@ -65,7 +73,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <NavBar />
       <main className="flex-grow flex">
         <DashboardSidebar userRole={userRole} onRoleChange={setUserRole} />
         <div className="flex-grow p-6 bg-gray-50 min-h-[calc(100vh-4rem)]">

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Upload, XCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { storageService } from "@/services/storageService";
+import { toast } from "sonner";
 
 interface FileUploadProps {
   label: string;
@@ -46,13 +47,25 @@ export const FileUpload = ({
     try {
       // Upload to Firebase Storage
       const path = `verification/${userId}/${fileType}_${Date.now()}`;
-      const downloadUrl = await storageService.uploadFile(path, file);
       
-      setFileUrl(downloadUrl);
-      onFileUploaded(downloadUrl);
+      console.log("Uploading file to path:", path);
+      console.log("File type:", file.type);
+      console.log("File size:", file.size);
+      
+      const downloadUrl = await storageService.uploadFile(path, file);
+      console.log("Download URL received:", downloadUrl);
+      
+      if (downloadUrl) {
+        setFileUrl(downloadUrl);
+        onFileUploaded(downloadUrl);
+        toast.success("File uploaded successfully");
+      } else {
+        throw new Error("Failed to get download URL");
+      }
     } catch (error) {
       console.error("Upload error:", error);
       setError("Failed to upload file. Please try again.");
+      toast.error("Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
     }

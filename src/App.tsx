@@ -14,20 +14,76 @@ import Dashboard from "./pages/Dashboard";
 import Verification from "./pages/Verification";
 import OnboardingStatus from "./pages/OnboardingStatus";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
 // Simple route protection
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute = ({ children, allowedStatuses = ["verified"] }: { 
+  children: React.ReactNode,
+  allowedStatuses?: Array<string>
+}) => {
   const { user, loading } = useAuth();
   
   // Show loading state if auth is still being determined
   if (loading) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-wedding-500" />
+        <span className="ml-2">Loading...</span>
+      </div>
+    );
   }
   
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // Check if user's status is allowed for this route
+  const userStatus = user.verificationStatus || "unverified";
+  if (!allowedStatuses.includes(userStatus)) {
+    // Redirect based on status
+    if (userStatus === "unverified") {
+      return <Navigate to={`/verification/${user.id}`} replace />;
+    } else if (userStatus === "onboarding") {
+      return <Navigate to="/onboarding-status" replace />;
+    }
+  }
+  
+  return <>{children}</>;
+};
+
+// Routes that are available for users in onboarding or verification process
+const StatusRoute = ({ children, requiredStatus }: { 
+  children: React.ReactNode,
+  requiredStatus: string
+}) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-wedding-500" />
+        <span className="ml-2">Loading...</span>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  const userStatus = user.verificationStatus || "unverified";
+  
+  if (userStatus !== requiredStatus) {
+    // Redirect based on status
+    if (userStatus === "verified") {
+      return <Navigate to="/dashboard" replace />;
+    } else if (userStatus === "unverified") {
+      return <Navigate to={`/verification/${user.id}`} replace />;
+    } else if (userStatus === "onboarding") {
+      return <Navigate to="/onboarding-status" replace />;
+    }
   }
   
   return <>{children}</>;
@@ -41,13 +97,20 @@ const AppContent = () => (
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
     <Route path="/about" element={<About />} />
-    <Route path="/verification/:userId" element={<Verification />} />
+    <Route 
+      path="/verification/:userId" 
+      element={
+        <StatusRoute requiredStatus="unverified">
+          <Verification />
+        </StatusRoute>
+      } 
+    />
     <Route 
       path="/onboarding-status" 
       element={
-        <ProtectedRoute>
+        <StatusRoute requiredStatus="onboarding">
           <OnboardingStatus />
-        </ProtectedRoute>
+        </StatusRoute>
       } 
     />
     <Route 

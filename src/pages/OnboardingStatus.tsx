@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { OnboardingStatus as StatusDisplay } from "@/components/verification/OnboardingStatus";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,7 +36,6 @@ const OnboardingStatus = () => {
   if (loading || !userRole) {
     return (
       <div className="min-h-screen flex flex-col">
-        <NavBar />
         <main className="flex-grow flex items-center justify-center">
           <div className="flex flex-col items-center">
             <Loader2 className="h-8 w-8 animate-spin text-wedding-500" />
@@ -51,7 +49,6 @@ const OnboardingStatus = () => {
   
   return (
     <div className="min-h-screen flex flex-col">
-      <NavBar />
       <main className="flex-grow py-12 flex items-center">
         <div className="container px-4">
           <StatusDisplay userRole={userRole} />

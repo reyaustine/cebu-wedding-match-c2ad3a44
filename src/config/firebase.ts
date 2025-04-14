@@ -10,7 +10,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyC6SKA1y8b_wuZej-o0jKuSZPWB3NHgy4g",
   authDomain: "theweddingmatchph.firebaseapp.com",
   projectId: "theweddingmatchph",
-  storageBucket: "theweddingmatchph.firebasestorage.app", // Fixed storage bucket URL
+  storageBucket: "theweddingmatchph.appspot.com", // Corrected storage bucket URL
   messagingSenderId: "875030223852",
   appId: "1:875030223852:web:889a84eb7256674c09bec9",
   measurementId: "G-VGG0MZMC72"

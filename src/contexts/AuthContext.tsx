@@ -32,31 +32,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Handle redirects based on user verification status
+  const handleUserRedirection = (user: User) => {
+    const verificationStatus = user.verificationStatus || "unverified";
+    
+    if (verificationStatus === "unverified") {
+      navigate(`/verification/${user.id}`);
+    } else if (verificationStatus === "onboarding") {
+      navigate('/onboarding-status');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChange((user) => {
       setUser(user);
       setLoading(false);
+      
+      // If user exists, check where they should be redirected
+      if (user && window.location.pathname !== `/verification/${user.id}` && 
+          window.location.pathname !== '/onboarding-status' && 
+          window.location.pathname !== '/dashboard') {
+        const verificationStatus = user.verificationStatus || "unverified";
+        
+        if (verificationStatus === "unverified") {
+          navigate(`/verification/${user.id}`);
+        } else if (verificationStatus === "onboarding") {
+          navigate('/onboarding-status');
+        } else if (verificationStatus === "verified") {
+          navigate('/dashboard');
+        }
+      }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     setLoading(true);
     try {
       const user = await loginUser(email, password);
       setUser(user);
-      
-      // Check verification status
-      const verificationStatus = user.verificationStatus || "unverified";
-      
-      if (verificationStatus === "unverified") {
-        navigate(`/verification/${user.id}`);
-      } else if (verificationStatus === "onboarding") {
-        navigate('/onboarding-status');
-      } else {
-        navigate('/dashboard');
-      }
+      handleUserRedirection(user);
     } catch (error) {
       console.error('Login error:', error);
     } finally {
@@ -70,11 +88,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const user = await signInWithGoogle(defaultRole);
       setUser(user);
       
-      // Check if user needs to complete verification
+      // Check verification status
       const verificationStatus = user.verificationStatus || "unverified";
       
       if (verificationStatus === "unverified") {
-        return user;
+        navigate(`/verification/${user.id}`);
       } else if (verificationStatus === "onboarding") {
         navigate('/onboarding-status');
       } else {
@@ -104,6 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(user);
       
       // Redirect to verification page for new users
+      navigate(`/verification/${user.id}`);
       return user;
     } catch (error) {
       console.error('Registration error:', error);

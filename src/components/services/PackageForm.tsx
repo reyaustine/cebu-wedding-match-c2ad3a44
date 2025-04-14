@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -52,7 +53,7 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<yup.InferType<typeof schema>>({
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<ServicePackage>({
     resolver: yupResolver(schema),
     defaultValues: formValues
   });
@@ -71,7 +72,7 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
             setValue('price', packageData.price);
             setValue('category', packageData.category);
             setValue('features', packageData.features);
-            setValue('images', packageData.images);
+            setValue('images', packageData.images || []);
           } else {
             toast.error("Package not found");
             navigate('/services');
@@ -87,7 +88,7 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
     }
   }, [isEditMode, packageId, setValue, navigate]);
 
-  const onSubmit = async (data: yup.InferType<typeof schema>) => {
+  const onSubmit = async (data: ServicePackage) => {
     if (!user) {
       toast.error("You must be logged in to create a package");
       return;
@@ -102,8 +103,8 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
         description: data.description,
         price: data.price,
         category: data.category,
-        features: data.features,
-        images: data.images || [],
+        features: Array.isArray(data.features) ? data.features : [data.features].filter(Boolean),
+        images: Array.isArray(data.images) ? data.images : [],
         isActive: true,
         createdAt: isEditMode ? formValues.createdAt : new Date(),
         updatedAt: new Date(),

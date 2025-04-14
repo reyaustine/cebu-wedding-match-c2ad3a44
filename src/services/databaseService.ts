@@ -64,6 +64,14 @@ export const dbService = {
     return null;
   },
 
+  // Alias for getById for backward compatibility
+  get: async <T>(
+    collectionName: string,
+    id: string
+  ): Promise<T | null> => {
+    return dbService.getById(collectionName, id);
+  },
+
   // Query collection
   query: async <T>(
     collectionName: string,
@@ -109,5 +117,13 @@ export const dbService = {
       id: doc.id, 
       ...doc.data() 
     }) as T);
+  },
+
+  // Add document (alias for create method)
+  add: async <T extends DocumentData>(
+    collectionName: string,
+    data: WithFieldValue<T>
+  ) => {
+    return dbService.create(collectionName, data);
   }
 };

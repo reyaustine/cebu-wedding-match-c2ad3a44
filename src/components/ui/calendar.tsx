@@ -142,9 +142,10 @@ function Calendar({
   classNames,
   showOutsideDays = true,
   selected,
-  onSelect,
+  mode = "single",
   ...props
 }: CalendarProps) {
+  // Remove onSelect from the function parameters as it's included in props
   const [month, setMonth] = React.useState<Date>(selected instanceof Date ? selected : new Date());
 
   React.useEffect(() => {
@@ -171,14 +172,17 @@ function Calendar({
     setMonth(newDate);
   };
 
+  // Extract onSelect from props to use in the DirectDateInput
+  const { onSelect } = props;
+
   return (
     <div className="space-y-2">
-      {/* Add direct date input component */}
-      {onSelect && typeof onSelect === 'function' && (
+      {/* Only show DirectDateInput for single mode when onSelect is provided */}
+      {mode === "single" && onSelect && typeof onSelect === 'function' && (
         <DirectDateInput 
           value={selected instanceof Date ? selected : undefined} 
           onChange={(date: Date) => {
-            if (onSelect && typeof onSelect === 'function') {
+            if (onSelect) {
               onSelect(date);
             }
           }} 
@@ -255,7 +259,7 @@ function Calendar({
         month={month}
         onMonthChange={setMonth}
         selected={selected}
-        mode="single"
+        mode={mode}
         {...props}
       />
     </div>

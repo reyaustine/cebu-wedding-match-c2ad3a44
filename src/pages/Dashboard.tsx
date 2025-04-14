@@ -25,7 +25,7 @@ const Dashboard = () => {
     if (loading) return;
     
     if (user) {
-      setUserRole(user.role);
+      setUserRole(user.role as UserRole);
     } else {
       // Redirect to login if no user is found
       toast.error("Please log in to access the dashboard");

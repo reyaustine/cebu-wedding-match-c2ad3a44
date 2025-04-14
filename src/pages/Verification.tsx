@@ -19,6 +19,16 @@ import { ServiceInfoForm } from "@/components/verification/ServiceInfoForm";
 import { ReviewInfoForm } from "@/components/verification/ReviewInfoForm";
 import { toast } from "sonner";
 import { dbService } from "@/services/databaseService";
+import { where, query } from "firebase/firestore";
+
+// Define interface for verification data
+interface VerificationData {
+  personalInfo?: PersonalInfo;
+  businessInfo?: BusinessInfo;
+  serviceInfo?: ServiceInfo;
+  userId: string;
+  status: string;
+}
 
 const Verification = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -63,11 +73,12 @@ const Verification = () => {
           return;
         }
         
-        setUserRole(userData.role);
+        // Type assertion for userData
+        setUserRole((userData as { role: UserRole }).role);
         
         // Fetch existing verification data if any
         try {
-          const verifications = await dbService.query(
+          const verifications = await dbService.query<VerificationData>(
             "userVerifications",
             where("userId", "==", userId)
           );

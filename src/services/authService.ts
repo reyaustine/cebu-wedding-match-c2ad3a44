@@ -1,4 +1,3 @@
-
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
@@ -30,7 +29,7 @@ import { toast } from "sonner";
 import { dbService } from "./databaseService";
 
 // User role types
-export type UserRole = "client" | "supplier" | "planner";
+export type UserRole = "client" | "supplier" | "planner" | "admin";
 
 // Verification status types
 export type VerificationStatus = "unverified" | "pre-verified" | "onboarding" | "verified" | "rejected";

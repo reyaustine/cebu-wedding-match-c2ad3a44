@@ -1,3 +1,4 @@
+
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
@@ -10,7 +11,7 @@ import {
   updatePassword
 } from "firebase/auth";
 import { auth, db } from "@/config/firebase";
-import { collection, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, getDoc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 
 export type UserRole = 'client' | 'supplier' | 'planner' | 'admin';
 
@@ -26,6 +27,49 @@ export interface User {
   businessName?: string;
   createdAt?: Date;
 }
+
+// Verification types
+export interface PersonalInfo {
+  address: string;
+  birthday?: string;
+  alternativePhone?: string;
+  avatarUrl?: string;
+  validIdUrl?: string;
+  selfieWithIdUrl?: string;
+}
+
+export interface BusinessInfo {
+  businessName: string;
+  businessAddress: string;
+  businessPhone: string;
+  tinNumber?: string;
+  dtiDocUrl?: string;
+  birDocUrl?: string;
+  businessPermitUrl?: string;
+  facebookPageUrl?: string;
+  facebookProfileUrl?: string;
+  viberNumber?: string;
+  whatsappNumber?: string;
+}
+
+export interface ServiceInfo {
+  serviceTypes: string[];
+}
+
+// Event types for service selection
+export const eventTypes = [
+  "Wedding",
+  "Engagement",
+  "Birthday",
+  "Corporate",
+  "Anniversary",
+  "Debut",
+  "Baby Shower",
+  "Graduation",
+  "Reunion",
+  "Holiday",
+  "Other"
+];
 
 // Update user password
 export const updateUserPassword = async (currentPassword: string, newPassword: string) => {
@@ -65,7 +109,7 @@ export const onAuthStateChange = (callback: (user: User | null) => void) => {
           photoURL: firebaseUser.photoURL,
           verificationStatus: userData.verificationStatus,
           businessName: userData.businessName,
-          createdAt: userData.createdAt?.toDate(),
+          createdAt: userData.createdAt instanceof Timestamp ? userData.createdAt.toDate() : userData.createdAt,
         };
         callback(user);
       } else {
@@ -141,7 +185,7 @@ export const signInWithGoogle = async (defaultRole: UserRole = "client"): Promis
         photoURL: user.photoURL,
         verificationStatus: userData.verificationStatus,
         businessName: userData.businessName,
-        createdAt: userData.createdAt?.toDate(),
+        createdAt: userData.createdAt instanceof Timestamp ? userData.createdAt.toDate() : userData.createdAt,
       };
     }
   } catch (error) {
@@ -215,7 +259,7 @@ export const loginUser = async (email: string, password: string): Promise<User> 
         photoURL: user.photoURL,
         verificationStatus: userData.verificationStatus,
         businessName: userData.businessName,
-        createdAt: userData.createdAt?.toDate(),
+        createdAt: userData.createdAt instanceof Timestamp ? userData.createdAt.toDate() : userData.createdAt,
       };
     } else {
       throw new Error("User document not found");
@@ -242,6 +286,86 @@ export const resetPassword = async (email: string) => {
     await sendPasswordResetEmail(auth, email);
   } catch (error) {
     console.error("Password reset error:", error);
+    throw error;
+  }
+};
+
+// Save user verification data
+export const saveUserVerificationData = async (
+  userId: string, 
+  dataType: 'personalInfo' | 'businessInfo' | 'serviceInfo', 
+  data: PersonalInfo | BusinessInfo | ServiceInfo
+) => {
+  try {
+    const userVerificationRef = doc(collection(db, 'userVerifications'));
+    
+    // Check if user already has verification data
+    const userVerifications = await collection(db, 'userVerifications');
+    const userVerificationQuery = await userVerifications;
+    const existingDocs = await userVerificationQuery;
+    
+    // If user has existing verification data, update it
+    if (existingDocs) {
+      await setDoc(
+        userVerificationRef, 
+        { 
+          userId, 
+          [dataType]: data, 
+          updatedAt: new Date(),
+          status: 'draft'
+        },
+        { merge: true }
+      );
+    } else {
+      // Create new verification data
+      await setDoc(
+        userVerificationRef,
+        {
+          userId,
+          [dataType]: data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          status: 'draft'
+        }
+      );
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving verification data:', error);
+    throw error;
+  }
+};
+
+// Submit verification for review
+export const submitVerificationForReview = async (userId: string, userRole: UserRole) => {
+  try {
+    // Update user verification status to 'onboarding'
+    await setDoc(
+      doc(db, 'users', userId),
+      { verificationStatus: 'onboarding' },
+      { merge: true }
+    );
+    
+    // Update verification data status to 'submitted'
+    const userVerifications = await collection(db, 'userVerifications');
+    const userVerificationQuery = await userVerifications;
+    const existingDocs = await userVerificationQuery;
+    
+    if (existingDocs) {
+      await setDoc(
+        doc(db, 'userVerifications', existingDocs.id),
+        {
+          status: 'submitted',
+          submittedAt: new Date()
+        },
+        { merge: true }
+      );
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error submitting verification for review:', error);
     throw error;
   }
 };

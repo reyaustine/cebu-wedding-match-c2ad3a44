@@ -124,7 +124,7 @@ export const PackageForm = ({ packageId, isEditMode }: PackageFormProps) => {
         form.setValue("description", packageData.description);
         form.setValue("price", packageData.price);
         form.setValue("category", packageData.category);
-        form.setValue("features", packageData.features.join('\n'));
+        form.setValue("features", packageData.features ? packageData.features.join('\n') : "");
         form.setValue("isActive", packageData.isActive);
         
         // Set existing images

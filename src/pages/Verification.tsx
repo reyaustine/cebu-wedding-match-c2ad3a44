@@ -17,7 +17,7 @@ import { ServiceInfoForm } from "@/components/verification/ServiceInfoForm";
 import { ReviewInfoForm } from "@/components/verification/ReviewInfoForm";
 import { toast } from "sonner";
 import { dbService } from "@/services/databaseService";
-import { where, query } from "firebase/firestore";
+import { where } from "firebase/firestore";
 
 interface VerificationData {
   personalInfo?: PersonalInfo;

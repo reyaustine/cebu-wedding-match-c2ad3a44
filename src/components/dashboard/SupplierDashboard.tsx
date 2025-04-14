@@ -8,8 +8,18 @@ import { useState, useEffect } from "react";
 import { dbService } from "@/services/databaseService";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { where } from "firebase/firestore";
+import { where, collection, doc, getDoc } from "firebase/firestore";
 import { Booking, ServicePackage } from "@/types/supplier";
+
+interface Conversation {
+  id?: string;
+  participants: string[];
+}
+
+interface Message {
+  senderId: string;
+  read: boolean;
+}
 
 interface DashboardStats {
   pendingBookings: number;
@@ -50,7 +60,7 @@ export const SupplierDashboard = () => {
         );
 
         // Get unread messages
-        const conversations = await dbService.query('conversations', 
+        const conversations = await dbService.query<Conversation>('conversations', 
           where('participants', 'array-contains', user.id)
         );
         
@@ -59,7 +69,7 @@ export const SupplierDashboard = () => {
         // Count unread messages
         for (const convo of conversations) {
           if (!convo.id) continue;
-          const messages = await dbService.query(
+          const messages = await dbService.query<Message>(
             `conversations/${convo.id}/messages`,
             where('senderId', '!=', user.id),
             where('read', '==', false)

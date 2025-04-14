@@ -1,7 +1,5 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,7 +19,6 @@ import { toast } from "sonner";
 import { dbService } from "@/services/databaseService";
 import { where, query } from "firebase/firestore";
 
-// Define interface for verification data
 interface VerificationData {
   personalInfo?: PersonalInfo;
   businessInfo?: BusinessInfo;
@@ -42,7 +39,6 @@ const Verification = () => {
   const [serviceInfo, setServiceInfo] = useState<ServiceInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Check if user exists and fetch role
   useEffect(() => {
     const checkUser = async () => {
       if (!userId) {
@@ -52,7 +48,6 @@ const Verification = () => {
       }
       
       try {
-        // Fetch user data from Firestore
         const userData = await dbService.getById("users", userId);
         
         if (!userData) {
@@ -61,7 +56,6 @@ const Verification = () => {
           return;
         }
         
-        // Check verification status
         const status = await checkVerificationStatus(userId);
         
         if (status === "verified") {
@@ -73,10 +67,8 @@ const Verification = () => {
           return;
         }
         
-        // Type assertion for userData
         setUserRole((userData as { role: UserRole }).role);
         
-        // Fetch existing verification data if any
         try {
           const verifications = await dbService.query<VerificationData>(
             "userVerifications",
@@ -110,11 +102,9 @@ const Verification = () => {
       await saveUserVerificationData(userId, "personalInfo", data);
       setPersonalInfo(data);
       
-      // For clients, go directly to review
       if (userRole === "client") {
         setCurrentStep(2);
       } else {
-        // For suppliers and planners, go to business info
         setCurrentStep(2);
       }
       
@@ -163,7 +153,6 @@ const Verification = () => {
       
       toast.success("Verification submitted successfully!");
       
-      // Redirect based on role
       if (userRole === "client") {
         navigate("/dashboard");
       } else {
@@ -179,7 +168,6 @@ const Verification = () => {
     if (!userId) return null;
     
     if (userRole === "client") {
-      // Client has only 2 steps
       switch (currentStep) {
         case 1:
           return (
@@ -204,7 +192,6 @@ const Verification = () => {
           return null;
       }
     } else {
-      // Supplier/Planner has 4 steps
       switch (currentStep) {
         case 1:
           return (
@@ -294,7 +281,6 @@ const Verification = () => {
   if (isLoading || loading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <NavBar />
         <main className="flex-grow flex items-center justify-center">
           <div className="flex flex-col items-center">
             <Loader2 className="h-8 w-8 animate-spin text-wedding-500" />
@@ -308,7 +294,6 @@ const Verification = () => {
   
   return (
     <div className="min-h-screen flex flex-col">
-      <NavBar />
       <main className="flex-grow py-12">
         <div className="container px-4 max-w-4xl mx-auto">
           <div className="text-center mb-6">

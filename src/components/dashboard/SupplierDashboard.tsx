@@ -69,8 +69,12 @@ export const SupplierDashboard = () => {
         // Count unread messages
         for (const convo of conversations) {
           if (!convo.id) continue;
+          
+          // Type assertion to fix the error
+          const convoId = convo.id as string;
+          
           const messages = await dbService.query<Message>(
-            `conversations/${convo.id}/messages`,
+            `conversations/${convoId}/messages`,
             where('senderId', '!=', user.id),
             where('read', '==', false)
           );
@@ -85,7 +89,9 @@ export const SupplierDashboard = () => {
         );
         
         const monthlyRevenue = completedBookings.reduce((total, booking) => {
-          return total + (booking.amount || 0);
+          // Type assertion or optional chaining to safely access amount
+          const bookingAmount = booking.amount || 0;
+          return total + bookingAmount;
         }, 0);
         
         setStats({

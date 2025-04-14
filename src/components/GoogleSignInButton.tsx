@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/services/authService";
+import { useNavigate } from "react-router-dom";
 
 interface GoogleSignInButtonProps {
   defaultRole?: UserRole;
@@ -19,11 +20,17 @@ export const GoogleSignInButton = ({
 }: GoogleSignInButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { googleSignIn } = useAuth();
+  const navigate = useNavigate();
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      await googleSignIn(defaultRole);
+      const user = await googleSignIn(defaultRole);
+      
+      // If this is a sign up and verification is needed, redirect to verification
+      if (mode === "signup" && user) {
+        navigate(`/verification/${user.id}`);
+      }
     } catch (error: any) {
       if (error.code !== 'auth/cancelled-popup-request') {
         toast.error(error.message || "Google sign-in failed");

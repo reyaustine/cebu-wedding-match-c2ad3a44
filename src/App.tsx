@@ -11,6 +11,8 @@ import Register from "./pages/Register";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
+import Verification from "./pages/Verification";
+import OnboardingStatus from "./pages/OnboardingStatus";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -39,6 +41,15 @@ const AppContent = () => (
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
     <Route path="/about" element={<About />} />
+    <Route path="/verification/:userId" element={<Verification />} />
+    <Route 
+      path="/onboarding-status" 
+      element={
+        <ProtectedRoute>
+          <OnboardingStatus />
+        </ProtectedRoute>
+      } 
+    />
     <Route 
       path="/dashboard" 
       element={

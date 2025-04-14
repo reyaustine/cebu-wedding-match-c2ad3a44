@@ -67,7 +67,7 @@ const Register = () => {
   const onSubmit = async (data: RegisterFormValues) => {
     setIsSubmitting(true);
     try {
-      await register(
+      const user = await register(
         data.email,
         data.password,
         data.firstName,
@@ -75,7 +75,11 @@ const Register = () => {
         selectedRole,
         data.phone
       );
-      // Navigate to the dashboard is handled in the AuthContext after successful registration
+      
+      if (user) {
+        // Redirect to verification page
+        navigate(`/verification/${user.id}`);
+      }
     } catch (error: any) {
       console.error("Registration error:", error);
     } finally {

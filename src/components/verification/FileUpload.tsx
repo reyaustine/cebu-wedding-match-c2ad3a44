@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Upload, XCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { storageService } from "@/services/storageService";
@@ -23,6 +23,7 @@ export const FileUpload = ({
   const [isUploading, setIsUploading] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | undefined>(existingUrl);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -76,6 +77,10 @@ export const FileUpload = ({
     onFileUploaded("");
   };
   
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+  
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium">{label}</p>
@@ -86,29 +91,30 @@ export const FileUpload = ({
             <Upload className="h-8 w-8 text-gray-400" />
           </div>
           
-          <label className="cursor-pointer">
-            <input 
-              type="file" 
-              className="hidden" 
-              onChange={handleFileChange}
-              accept="image/jpeg,image/png,image/jpg,application/pdf"
-              disabled={isUploading}
-            />
-            <Button 
-              type="button" 
-              variant="outline"
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                "Choose File"
-              )}
-            </Button>
-          </label>
+          <input 
+            type="file" 
+            className="hidden" 
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/jpeg,image/png,image/jpg,application/pdf"
+            disabled={isUploading}
+          />
+          
+          <Button 
+            type="button" 
+            variant="outline"
+            onClick={triggerFileInput}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              "Choose File"
+            )}
+          </Button>
           
           <p className="text-xs text-muted-foreground mt-2">
             JPEG, PNG or PDF (Max 5MB)

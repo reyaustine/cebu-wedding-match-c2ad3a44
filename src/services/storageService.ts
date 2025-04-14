@@ -4,17 +4,28 @@ import { storage } from "@/config/firebase";
 import { toast } from "sonner";
 
 export const storageService = {
-  // Upload file to storage
+  // Upload file to storage with progress tracking
   uploadFile: async (
     filePath: string,
     file: File
   ): Promise<string> => {
     try {
+      console.log("Starting file upload to path:", filePath);
+      
+      // Create a storage reference
       const storageRef = ref(storage, filePath);
+      
+      // Upload the file
       const snapshot = await uploadBytes(storageRef, file);
+      console.log("File uploaded successfully");
+      
+      // Get download URL
       const downloadURL = await getDownloadURL(snapshot.ref);
+      console.log("Download URL obtained:", downloadURL);
+      
       return downloadURL;
     } catch (error: any) {
+      console.error("Error in uploadFile:", error);
       toast.error(`Upload failed: ${error.message}`);
       throw error;
     }

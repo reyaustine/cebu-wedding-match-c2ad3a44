@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { DayPicker, DayPickerProps } from "react-day-picker";
@@ -84,13 +83,12 @@ function MonthNavigation({ currentMonth, goToMonth }: MonthNavigationProps) {
   );
 }
 
-function DirectDateInput({ 
-  value, 
-  onChange 
-}: { 
+interface DirectDateInputProps { 
   value?: Date; 
   onChange: (date: Date) => void;
-}) {
+}
+
+function DirectDateInput({ value, onChange }: DirectDateInputProps) {
   const [inputValue, setInputValue] = React.useState(
     value ? format(value, "yyyy-MM-dd") : ""
   );
@@ -137,6 +135,14 @@ function DirectDateInput({
   );
 }
 
+type CustomSelectFn = (date: Date | undefined) => void;
+
+interface ExtendedCalendarProps extends Omit<CalendarProps, 'onSelect'> {
+  onSelect?: CustomSelectFn;
+  selected?: Date | Date[] | undefined;
+  mode?: "single" | "multiple" | "range";
+}
+
 function Calendar({
   className,
   classNames,
@@ -144,9 +150,10 @@ function Calendar({
   selected,
   mode = "single",
   ...props
-}: CalendarProps) {
-  // Remove onSelect from the function parameters as it's included in props
-  const [month, setMonth] = React.useState<Date>(selected instanceof Date ? selected : new Date());
+}: ExtendedCalendarProps) {
+  const [month, setMonth] = React.useState<Date>(
+    selected instanceof Date ? selected : new Date()
+  );
 
   React.useEffect(() => {
     if (selected instanceof Date) {
@@ -172,19 +179,18 @@ function Calendar({
     setMonth(newDate);
   };
 
-  // Extract onSelect from props to use in the DirectDateInput
-  const { onSelect } = props;
+  const { onSelect } = props as { onSelect?: CustomSelectFn };
+  
+  const safeProps = { ...props };
+  delete (safeProps as any).onSelect;
 
   return (
     <div className="space-y-2">
-      {/* Only show DirectDateInput for single mode when onSelect is provided */}
-      {mode === "single" && onSelect && typeof onSelect === 'function' && (
+      {mode === "single" && onSelect && (
         <DirectDateInput 
           value={selected instanceof Date ? selected : undefined} 
           onChange={(date: Date) => {
-            if (onSelect) {
-              onSelect(date);
-            }
+            onSelect(date);
           }} 
         />
       )}
@@ -196,7 +202,7 @@ function Calendar({
           months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
           month: "space-y-4",
           caption: "flex flex-col pt-1 relative items-center gap-2",
-          caption_label: "hidden", // Hide the original caption label
+          caption_label: "hidden",
           nav: "flex items-center justify-between w-full px-1",
           nav_button: cn(
             buttonVariants({ variant: "outline" }),
@@ -260,7 +266,12 @@ function Calendar({
         onMonthChange={setMonth}
         selected={selected}
         mode={mode}
-        {...props}
+        onSelect={(date) => {
+          if (onSelect && date) {
+            onSelect(date instanceof Date ? date : undefined);
+          }
+        }}
+        {...safeProps}
       />
     </div>
   );

@@ -15,6 +15,9 @@ import Verification from "./pages/Verification";
 import OnboardingStatus from "./pages/OnboardingStatus";
 import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
+import Bookings from "./pages/Bookings";
+import Services from "./pages/Services";
+import ServiceForm from "./pages/ServiceForm";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
@@ -136,6 +139,38 @@ const AppContent = () => (
       element={
         <ProtectedRoute>
           <Messages />
+        </ProtectedRoute>
+      } 
+    />
+    <Route 
+      path="/bookings" 
+      element={
+        <ProtectedRoute>
+          <Bookings />
+        </ProtectedRoute>
+      } 
+    />
+    <Route 
+      path="/services" 
+      element={
+        <ProtectedRoute>
+          <Services />
+        </ProtectedRoute>
+      } 
+    />
+    <Route 
+      path="/services/new" 
+      element={
+        <ProtectedRoute>
+          <ServiceForm />
+        </ProtectedRoute>
+      } 
+    />
+    <Route 
+      path="/services/edit/:packageId" 
+      element={
+        <ProtectedRoute>
+          <ServiceForm />
         </ProtectedRoute>
       } 
     />

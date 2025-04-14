@@ -43,6 +43,20 @@ interface VerificationRequest {
   createdAt: any; // Firestore timestamp
   status: "pending" | "approved" | "rejected";
   category?: string;
+  businessInfo?: {
+    businessName: string;
+    [key: string]: any;
+  };
+}
+
+interface UserData {
+  id: string;
+  email: string;
+  displayName?: string;
+  businessInfo?: {
+    businessName: string;
+    [key: string]: any;
+  };
 }
 
 export const AdminDashboard = () => {
@@ -68,7 +82,7 @@ export const AdminDashboard = () => {
         const totalUsers = users.length;
         
         // Fetch pending verification requests
-        const verifications = await dbService.query("userVerifications", 
+        const verifications = await dbService.query<VerificationRequest>("userVerifications", 
           where("status", "==", "pending")
         );
         
@@ -79,7 +93,7 @@ export const AdminDashboard = () => {
         
         for (const verification of verifications) {
           try {
-            const userData = await dbService.getById("users", verification.userId);
+            const userData = await dbService.getById<UserData>("users", verification.userId);
             if (userData) {
               enrichedVerifications.push({
                 ...verification,
@@ -129,7 +143,7 @@ export const AdminDashboard = () => {
       
       // Refetch verification requests
       const updatedVerifications = verificationRequests.map(req => 
-        req.id === id ? { ...req, status: "approved" } : req
+        req.id === id ? { ...req, status: "approved" as const } : req
       );
       
       setVerificationRequests(updatedVerifications);
@@ -153,7 +167,7 @@ export const AdminDashboard = () => {
       
       // Refetch verification requests
       const updatedVerifications = verificationRequests.map(req => 
-        req.id === id ? { ...req, status: "rejected" } : req
+        req.id === id ? { ...req, status: "rejected" as const } : req
       );
       
       setVerificationRequests(updatedVerifications);

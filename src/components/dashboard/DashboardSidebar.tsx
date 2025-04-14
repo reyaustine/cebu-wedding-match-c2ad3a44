@@ -119,18 +119,22 @@ export const DashboardSidebar = ({ userRole, onRoleChange }: DashboardSidebarPro
     return false;
   };
 
+  // Get display name or email from user
+  const displayName = user?.email ? (user.email.split('@')[0] || 'User') : 'User';
+  const avatarFallback = displayName.charAt(0).toUpperCase();
+
   return (
     <div className="flex flex-col h-full">
       {/* User profile section */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
           <Avatar>
-            <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
-            {user?.photoURL && <AvatarImage src={user.photoURL} alt={user?.displayName || ''} />}
+            <AvatarFallback>{avatarFallback}</AvatarFallback>
+            {user?.photoURL && <AvatarImage src={user.photoURL} alt={displayName} />}
           </Avatar>
           {!collapsed && (
             <div className="flex-grow">
-              <p className="font-medium truncate">{user?.displayName || user?.email || 'User'}</p>
+              <p className="font-medium truncate">{displayName}</p>
               <p className="text-xs text-gray-500">
                 {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Account
               </p>

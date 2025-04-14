@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { DayPicker, DayPickerRootProps, SelectSingleEventHandler } from "react-day-picker";
+import { DayPicker, DayPickerProps } from "react-day-picker";
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
@@ -89,7 +89,7 @@ function DirectDateInput({
   onChange 
 }: { 
   value?: Date; 
-  onChange: SelectSingleEventHandler;
+  onChange: (date: Date) => void;
 }) {
   const [inputValue, setInputValue] = React.useState(
     value ? format(value, "yyyy-MM-dd") : ""
@@ -145,10 +145,10 @@ function Calendar({
   onSelect,
   ...props
 }: CalendarProps) {
-  const [month, setMonth] = React.useState<Date>(selected || new Date());
+  const [month, setMonth] = React.useState<Date>(selected instanceof Date ? selected : new Date());
 
   React.useEffect(() => {
-    if (selected) {
+    if (selected instanceof Date) {
       setMonth(selected);
     }
   }, [selected]);
@@ -174,8 +174,15 @@ function Calendar({
   return (
     <div className="space-y-2">
       {/* Add direct date input component */}
-      {onSelect && (
-        <DirectDateInput value={selected as Date} onChange={onSelect} />
+      {onSelect && typeof onSelect === 'function' && (
+        <DirectDateInput 
+          value={selected instanceof Date ? selected : undefined} 
+          onChange={(date: Date) => {
+            if (onSelect && typeof onSelect === 'function') {
+              onSelect(date);
+            }
+          }} 
+        />
       )}
       
       <DayPicker
@@ -225,6 +232,7 @@ function Calendar({
                   onClick={goToMonthPrevYear}
                   className={buttonVariants({ variant: "outline", size: "icon" })}
                   style={{ height: "28px", width: "28px", padding: 0 }}
+                  type="button"
                 >
                   <ChevronsLeft className="h-4 w-4" />
                 </button>
@@ -236,6 +244,7 @@ function Calendar({
                   onClick={goToMonthNextYear}
                   className={buttonVariants({ variant: "outline", size: "icon" })}
                   style={{ height: "28px", width: "28px", padding: 0 }}
+                  type="button"
                 >
                   <ChevronsRight className="h-4 w-4" />
                 </button>
@@ -246,7 +255,7 @@ function Calendar({
         month={month}
         onMonthChange={setMonth}
         selected={selected}
-        onSelect={onSelect}
+        mode="single"
         {...props}
       />
     </div>

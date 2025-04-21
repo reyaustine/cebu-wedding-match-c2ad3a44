@@ -30,6 +30,7 @@ interface DashboardStats {
 
 export const SupplierDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
     pendingBookings: 0,
     activePackages: 0,
@@ -46,6 +47,7 @@ export const SupplierDashboard = () => {
       
       try {
         setIsLoading(true);
+        setError(null);
         
         // Fetch pending bookings count
         const bookings = await dbService.query<Booking>('bookings', 
@@ -70,15 +72,19 @@ export const SupplierDashboard = () => {
         for (const convo of conversations) {
           if (!convo.id) continue;
           
-          // Type assertion to fix the error
           const convoId = convo.id as string;
           
-          const messages = await dbService.query<Message>(
-            `conversations/${convoId}/messages`,
-            where('senderId', '!=', user.id),
-            where('read', '==', false)
-          );
-          unreadCount += messages.length;
+          try {
+            const messages = await dbService.query<Message>(
+              `conversations/${convoId}/messages`,
+              where('senderId', '!=', user.id),
+              where('read', '==', false)
+            );
+            unreadCount += messages.length;
+          } catch (messageError) {
+            console.error("Error fetching messages:", messageError);
+            // Continue with other conversations
+          }
         }
         
         // Calculate monthly revenue (simplified for demo)
@@ -89,7 +95,6 @@ export const SupplierDashboard = () => {
         );
         
         const monthlyRevenue = completedBookings.reduce((total, booking) => {
-          // Type assertion or optional chaining to safely access amount
           const bookingAmount = booking.amount || 0;
           return total + bookingAmount;
         }, 0);
@@ -102,6 +107,7 @@ export const SupplierDashboard = () => {
         });
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        setError("Failed to load dashboard data. Please try again later.");
         toast.error("Failed to load dashboard data");
       } finally {
         setIsLoading(false);
@@ -120,6 +126,23 @@ export const SupplierDashboard = () => {
       <div className="flex flex-col items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-wedding-500" />
         <p className="mt-4 text-gray-600">Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+          <p className="text-red-600 mb-2">{error}</p>
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.reload()}
+            className="mt-2"
+          >
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }

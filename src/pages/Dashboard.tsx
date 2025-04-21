@@ -7,7 +7,7 @@ import { SupplierDashboard } from "@/components/dashboard/SupplierDashboard";
 import { PlannerDashboard } from "@/components/dashboard/PlannerDashboard";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
 import { UserRole } from "@/services/authService";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, Menu, X } from "lucide-react";
@@ -20,6 +20,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const isMobile = useIsMobile();
+  const location = useLocation();
   
   // Check if user is logged in and set role
   useEffect(() => {
@@ -61,7 +62,8 @@ const Dashboard = () => {
     setUserRole(role as UserRole);
   };
 
-  if (loading) {
+  // Only show loading state for the dashboard page, not other pages
+  if (loading && location.pathname === "/dashboard") {
     return (
       <div className="min-h-screen flex flex-col">
         <main className="flex-grow flex items-center justify-center">
@@ -76,6 +78,11 @@ const Dashboard = () => {
   }
 
   const renderDashboardContent = () => {
+    // Only render dashboard content if on the dashboard page
+    if (location.pathname !== "/dashboard") {
+      return null;
+    }
+
     switch (userRole) {
       case "client":
         return <ClientDashboard />;

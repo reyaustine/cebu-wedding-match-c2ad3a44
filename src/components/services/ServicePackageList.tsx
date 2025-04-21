@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { dbService } from "@/services/databaseService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,10 +22,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { where } from "firebase/firestore";
 import { Timestamp } from "firebase/firestore";
+import { errorHandler } from "@/services/errorHandlingService";
 
 export const ServicePackageList = () => {
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -36,6 +37,8 @@ export const ServicePackageList = () => {
       
       try {
         setIsLoading(true);
+        setError(null);
+        
         const packagesData = await dbService.query<ServicePackage>(
           'servicePackages',
           where('supplierId', '==', user.id)
@@ -50,8 +53,11 @@ export const ServicePackageList = () => {
         
         setPackages(processedPackages);
       } catch (error) {
-        console.error("Error fetching service packages:", error);
-        toast.error("Failed to load service packages");
+        const errorMessage = errorHandler.handle(error, {
+          customMessage: "Failed to load service packages",
+          showToast: true
+        });
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -74,8 +80,9 @@ export const ServicePackageList = () => {
       setPackages(prevPackages => prevPackages.filter(pkg => pkg.id !== packageId));
       toast.success("Package deleted successfully");
     } catch (error) {
-      console.error("Error deleting package:", error);
-      toast.error("Failed to delete package");
+      errorHandler.handle(error, {
+        customMessage: "Failed to delete package",
+      });
     }
   };
 
@@ -99,8 +106,9 @@ export const ServicePackageList = () => {
       
       toast.success(`Package ${newStatus ? 'activated' : 'deactivated'} successfully`);
     } catch (error) {
-      console.error("Error updating package status:", error);
-      toast.error("Failed to update package status");
+      errorHandler.handle(error, {
+        customMessage: "Failed to update package status",
+      });
     }
   };
 
@@ -109,6 +117,23 @@ export const ServicePackageList = () => {
       <div className="flex flex-col items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-wedding-500" />
         <p className="mt-4 text-gray-600">Loading service packages...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+          <p className="text-red-600 mb-2">{error}</p>
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.reload()}
+            className="mt-2"
+          >
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }

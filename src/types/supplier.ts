@@ -1,6 +1,8 @@
 
-// Add ServicePackage interface if it doesn't exist
 import { Timestamp } from "firebase/firestore";
+
+// Define the type for date fields that can be either Date or Firestore Timestamp
+export type DateOrTimestamp = Date | Timestamp;
 
 export interface ServicePackage {
   id: string;
@@ -12,24 +14,25 @@ export interface ServicePackage {
   features: string[];
   images: string[];
   isActive: boolean;
-  createdAt: Date | Timestamp;
-  updatedAt: Date | Timestamp;
+  createdAt: DateOrTimestamp;
+  updatedAt: DateOrTimestamp;
 }
 
 export interface Booking {
   id: string;
   clientId: string;
   supplierId: string;
-  clientName: string;
-  packageId: string;
-  packageName: string;
-  date: Date;
-  amount: number;
+  serviceId: string;
+  serviceName: string;
+  date: DateOrTimestamp;
+  time: string;
+  location: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  amount: number;
   notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  completedAt?: Date;
+  createdAt: DateOrTimestamp;
+  updatedAt: DateOrTimestamp;
+  completedAt?: DateOrTimestamp;
 }
 
 export interface SupplierProfile {
@@ -40,33 +43,18 @@ export interface SupplierProfile {
   contactEmail: string;
   contactPhone: string;
   address: string;
-  city: string;
-  coverImage: string;
-  profileImage: string;
-  gallery: string[];
   categories: string[];
+  logo?: string;
+  coverImage?: string;
+  gallery: string[];
   socialLinks: {
     facebook?: string;
     instagram?: string;
     website?: string;
   };
-  averageRating: number;
-  reviewCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface Review {
-  id: string;
-  supplierId: string;
-  clientId: string;
-  clientName: string;
-  bookingId: string;
-  packageId: string;
-  packageName: string;
+  verificationStatus: 'pending' | 'verified' | 'rejected';
   rating: number;
-  comment: string;
-  images: string[];
-  createdAt: Date;
-  updatedAt: Date;
+  reviewCount: number;
+  createdAt: DateOrTimestamp;
+  updatedAt: DateOrTimestamp;
 }

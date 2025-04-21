@@ -22,6 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { where } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 
 export const ServicePackageList = () => {
   const [packages, setPackages] = useState<ServicePackage[]>([]);
@@ -43,8 +44,8 @@ export const ServicePackageList = () => {
         // Convert timestamps to Date objects
         const processedPackages = packagesData.map(pkg => ({
           ...pkg,
-          createdAt: pkg.createdAt instanceof Date ? pkg.createdAt : new Date(pkg.createdAt),
-          updatedAt: pkg.updatedAt instanceof Date ? pkg.updatedAt : new Date(pkg.updatedAt)
+          createdAt: pkg.createdAt instanceof Timestamp ? pkg.createdAt.toDate() : pkg.createdAt,
+          updatedAt: pkg.updatedAt instanceof Timestamp ? pkg.updatedAt.toDate() : pkg.updatedAt
         }));
         
         setPackages(processedPackages);

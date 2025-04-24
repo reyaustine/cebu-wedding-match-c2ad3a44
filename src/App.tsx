@@ -1,36 +1,20 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Home from "./pages/Home";
-import SupplierDirectory from "./pages/SupplierDirectory";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import About from "./pages/About";
-import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
-import Verification from "./pages/Verification";
-import OnboardingStatus from "./pages/OnboardingStatus";
-import Profile from "./pages/Profile";
-import Messages from "./pages/Messages";
-import Bookings from "./pages/Bookings";
-import Services from "./pages/Services";
-import ServiceForm from "./pages/ServiceForm";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
-// Simple route protection
 const ProtectedRoute = ({ children, allowedStatuses = ["verified"] }: { 
   children: React.ReactNode,
   allowedStatuses?: Array<string>
 }) => {
   const { user, loading } = useAuth();
   
-  // Show loading state if auth is still being determined
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -44,10 +28,8 @@ const ProtectedRoute = ({ children, allowedStatuses = ["verified"] }: {
     return <Navigate to="/login" replace />;
   }
   
-  // Check if user's status is allowed for this route
   const userStatus = user.verificationStatus || "unverified";
   if (!allowedStatuses.includes(userStatus)) {
-    // Redirect based on status
     if (userStatus === "unverified") {
       return <Navigate to={`/verification/${user.id}`} replace />;
     } else if (userStatus === "onboarding") {
@@ -58,7 +40,6 @@ const ProtectedRoute = ({ children, allowedStatuses = ["verified"] }: {
   return <>{children}</>;
 };
 
-// Routes that are available for users in onboarding or verification process
 const StatusRoute = ({ children, requiredStatus }: { 
   children: React.ReactNode,
   requiredStatus: string
@@ -81,7 +62,6 @@ const StatusRoute = ({ children, requiredStatus }: {
   const userStatus = user.verificationStatus || "unverified";
   
   if (userStatus !== requiredStatus) {
-    // Redirect based on status
     if (userStatus === "verified") {
       return <Navigate to="/dashboard" replace />;
     } else if (userStatus === "unverified") {
@@ -94,97 +74,104 @@ const StatusRoute = ({ children, requiredStatus }: {
   return <>{children}</>;
 };
 
-// App wrapper that provides auth context
-const AppContent = () => (
-  <Routes>
-    <Route path="/" element={<Home />} />
-    <Route path="/suppliers" element={<SupplierDirectory />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/register" element={<Register />} />
-    <Route path="/about" element={<About />} />
-    <Route 
-      path="/verification/:userId" 
-      element={
-        <StatusRoute requiredStatus="unverified">
-          <Verification />
-        </StatusRoute>
-      } 
-    />
-    <Route 
-      path="/onboarding-status" 
-      element={
-        <StatusRoute requiredStatus="onboarding">
-          <OnboardingStatus />
-        </StatusRoute>
-      } 
-    />
-    <Route 
-      path="/dashboard" 
-      element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/profile" 
-      element={
-        <ProtectedRoute>
-          <Profile />
-        </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/messages" 
-      element={
-        <ProtectedRoute>
-          <Messages />
-        </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/bookings" 
-      element={
-        <ProtectedRoute>
-          <Bookings />
-        </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/services" 
-      element={
-        <ProtectedRoute>
-          <Services />
-        </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/services/new" 
-      element={
-        <ProtectedRoute>
-          <ServiceForm />
-        </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/services/edit/:packageId" 
-      element={
-        <ProtectedRoute>
-          <ServiceForm />
-        </ProtectedRoute>
-      } 
-    />
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
+const AppContent = () => {
+  const { user } = useAuth();
+  const showBottomNav = user && window.location.pathname !== '/';
+
+  return (
+    <div className="app-container">
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/suppliers" element={<SupplierDirectory />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/about" element={<About />} />
+        <Route 
+          path="/verification/:userId" 
+          element={
+            <StatusRoute requiredStatus="unverified">
+              <Verification />
+            </StatusRoute>
+          } 
+        />
+        <Route 
+          path="/onboarding-status" 
+          element={
+            <StatusRoute requiredStatus="onboarding">
+              <OnboardingStatus />
+            </StatusRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/messages" 
+          element={
+            <ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/bookings" 
+          element={
+            <ProtectedRoute>
+              <Bookings />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/services" 
+          element={
+            <ProtectedRoute>
+              <Services />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/services/new" 
+          element={
+            <ProtectedRoute>
+              <ServiceForm />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/services/edit/:packageId" 
+          element={
+            <ProtectedRoute>
+              <ServiceForm />
+            </ProtectedRoute>
+          } 
+        />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      {showBottomNav && <MobileBottomNav />}
+      <Toaster />
+      <Sonner />
+    </div>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AuthProvider>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
           <AppContent />
         </TooltipProvider>
       </AuthProvider>

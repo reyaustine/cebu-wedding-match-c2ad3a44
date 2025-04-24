@@ -85,9 +85,6 @@ export function MobileLayout({
           children
         )}
       </main>
-
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }

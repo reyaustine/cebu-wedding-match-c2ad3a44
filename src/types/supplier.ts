@@ -1,4 +1,8 @@
 
+import { Timestamp } from "firebase/firestore";
+
+export type DateOrTimestamp = Date | Timestamp;
+
 export interface SupplierProfile {
   id?: string;
   userId: string;
@@ -14,15 +18,48 @@ export interface SupplierProfile {
   profileImage: string;
   gallery: string[];
   website?: string;
-  socialMedia?: {
+  socialLinks?: {
     facebook?: string;
     instagram?: string;
-    twitter?: string;
+    website?: string;
   };
   verificationStatus: 'unverified' | 'pending' | 'verified' | 'rejected';
   services?: string[];
   averageRating?: number;
-  reviews?: number;
+  reviewCount?: number;
   createdAt?: DateOrTimestamp;
   updatedAt: Date;
+}
+
+export interface ServicePackage {
+  id: string;
+  supplierId: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  features: string[];
+  images: string[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Booking {
+  id: string;
+  packageId: string;
+  clientId: string;
+  supplierId: string;
+  clientName: string;
+  packageName: string;
+  date: DateOrTimestamp;
+  startTime: DateOrTimestamp;
+  endTime: DateOrTimestamp;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  notes?: string;
+  totalAmount: number;
+  paymentStatus: 'pending' | 'partial' | 'paid';
+  paymentMethod?: string;
+  createdAt: DateOrTimestamp;
+  updatedAt: DateOrTimestamp;
 }

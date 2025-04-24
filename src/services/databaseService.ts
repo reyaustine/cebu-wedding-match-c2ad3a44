@@ -1,4 +1,3 @@
-
 import { db } from "@/config/firebase";
 import {
   collection,
@@ -100,7 +99,7 @@ export const dbService = {
   /**
    * Get a document by ID
    */
-  get: async <T = DocumentData>(collectionName: string, id: string): Promise<T | null> => {
+  get: async <T extends DocumentData>(collectionName: string, id: string): Promise<T | null> => {
     try {
       const docRef = doc(db, collectionName, id);
       const docSnap = await getDoc(docRef);
@@ -125,8 +124,8 @@ export const dbService = {
   /**
    * Alias for get (for compatibility)
    */
-  getById: async <T = DocumentData>(collectionName: string, id: string): Promise<T | null> => {
-    return dbService.get(collectionName, id);
+  getById: async <T extends DocumentData>(collectionName: string, id: string): Promise<T | null> => {
+    return dbService.get<T>(collectionName, id);
   },
 
   /**
@@ -165,7 +164,7 @@ export const dbService = {
   /**
    * Query documents in a collection
    */
-  query: async <T = DocumentData>
+  query: async <T extends DocumentData>
     (collectionPath: string, ...queryConstraints: QueryConstraint[]): Promise<T[]> => {
     try {
       const collectionRef = collection(db, collectionPath);
@@ -187,7 +186,7 @@ export const dbService = {
   /**
    * Get all documents in a collection
    */
-  getAll: async <T = DocumentData>(collectionName: string): Promise<T[]> => {
+  getAll: async <T extends DocumentData>(collectionName: string): Promise<T[]> => {
     try {
       const collectionRef = collection(db, collectionName);
       const querySnapshot = await getDocs(collectionRef);

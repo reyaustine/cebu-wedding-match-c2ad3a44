@@ -11,11 +11,11 @@ export function MobileBottomNav() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 flex items-center justify-around px-4 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 flex items-center justify-around px-4 z-40 bottom-safe-area">
       <Link
         to="/dashboard"
         className={cn(
-          "flex flex-col items-center justify-center flex-1 h-full",
+          "flex flex-col items-center justify-center flex-1 h-full mobile-btn",
           isActive("/dashboard") ? "text-wedding-500" : "text-gray-500"
         )}
       >
@@ -26,7 +26,7 @@ export function MobileBottomNav() {
       <Link
         to="/bookings"
         className={cn(
-          "flex flex-col items-center justify-center flex-1 h-full",
+          "flex flex-col items-center justify-center flex-1 h-full mobile-btn",
           isActive("/bookings") ? "text-wedding-500" : "text-gray-500"
         )}
       >
@@ -37,7 +37,7 @@ export function MobileBottomNav() {
       <Link
         to="/messages"
         className={cn(
-          "flex flex-col items-center justify-center flex-1 h-full",
+          "flex flex-col items-center justify-center flex-1 h-full mobile-btn",
           isActive("/messages") ? "text-wedding-500" : "text-gray-500"
         )}
       >
@@ -48,7 +48,7 @@ export function MobileBottomNav() {
       <Link
         to="/profile"
         className={cn(
-          "flex flex-col items-center justify-center flex-1 h-full",
+          "flex flex-col items-center justify-center flex-1 h-full mobile-btn",
           isActive("/profile") ? "text-wedding-500" : "text-gray-500"
         )}
       >

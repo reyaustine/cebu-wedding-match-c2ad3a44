@@ -3,6 +3,10 @@
 :root {
   --app-header-height: 3.75rem;
   --app-footer-height: 4rem;
+  --safe-area-top: env(safe-area-inset-top, 0);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0);
+  --safe-area-left: env(safe-area-inset-left, 0);
+  --safe-area-right: env(safe-area-inset-right, 0);
 }
 
 /* Global app container */
@@ -13,6 +17,10 @@
   max-width: 100vw;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
 }
 
 /* Main content area that pushes footer to bottom */
@@ -23,12 +31,12 @@
 
 /* Safe area for content below fixed headers */
 .safe-area-top {
-  padding-top: var(--app-header-height);
+  padding-top: calc(var(--app-header-height) + var(--safe-area-top));
 }
 
 /* Safe area for content above fixed footers */
 .safe-area-bottom {
-  padding-bottom: var(--app-footer-height);
+  padding-bottom: calc(var(--app-footer-height) + var(--safe-area-bottom));
 }
 
 /* Prevent overflow and maintain mobile height */
@@ -52,6 +60,7 @@
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   z-index: 50;
   height: var(--app-footer-height);
+  padding-bottom: var(--safe-area-bottom);
 }
 
 /* Remove blue highlight on mobile touch */
@@ -59,11 +68,18 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Add native-like momentum scrolling */
+.native-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
 /* Hide scrollbar for cleaner mobile UI */
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -73,8 +89,50 @@
   .notch-safe-area {
     padding-left: max(1rem, env(safe-area-inset-left));
     padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  
+  .bottom-safe-area {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
+}
+
+/* Mobile-specific styles */
+.mobile-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--app-header-height);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  z-index: 40;
+  padding-top: var(--safe-area-top);
+}
+
+/* Make mobile buttons feel more native */
+.mobile-btn {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.mobile-btn:active {
+  transform: scale(0.97);
+}
+
+/* Add iOS-style pull to refresh space */
+.pull-to-refresh {
+  margin-top: -50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Legacy styles kept for compatibility */
@@ -84,9 +142,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +7,22 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+
+// Import all the page components
+import Home from "./pages/Home";
+import SupplierDirectory from "./pages/SupplierDirectory";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import About from "./pages/About";
+import Verification from "./pages/Verification";
+import OnboardingStatus from "./pages/OnboardingStatus";
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import Messages from "./pages/Messages";
+import Bookings from "./pages/Bookings";
+import Services from "./pages/Services";
+import ServiceForm from "./pages/ServiceForm";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 

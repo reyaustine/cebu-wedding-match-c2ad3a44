@@ -35,6 +35,15 @@ export const HeroSection = () => {
               Browse Suppliers
             </Button>
           </Link>
+
+          <Link to="/login" className="w-full mt-2">
+            <Button 
+              variant="ghost"
+              className="w-full text-gray-600 hover:bg-gray-100 text-base"
+            >
+              Already have an account? Login
+            </Button>
+          </Link>
         </div>
 
         <div className="pt-6 flex flex-col gap-3 text-sm">
@@ -57,4 +66,3 @@ export const HeroSection = () => {
     </section>
   );
 };
-

@@ -1,26 +1,31 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ClientProfile } from '@/components/profile/ClientProfile';
 import { SupplierProfile } from '@/components/profile/SupplierProfile';
 import { PlannerProfile } from '@/components/profile/PlannerProfile';
 import { AdminProfile } from '@/components/profile/AdminProfile';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
-import { Loader2 } from 'lucide-react';
-import { MobileLayout } from '@/components/layout/MobileLayout';
+import { MobilePage } from '@/components/layout/MobilePage';
+import { Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Profile = () => {
   const { user, isAuthorized, loading } = useProtectedRoute();
+  const [refreshing, setRefreshing] = useState(false);
   
-  if (loading) {
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Simulate a refresh
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setRefreshing(false);
+  };
+  
+  if (loading || !isAuthorized || !user) {
     return (
-      <MobileLayout isLoading={true} loadingText="Loading your profile...">
+      <MobilePage isLoading loadingText="Loading your profile...">
         <></>
-      </MobileLayout>
+      </MobilePage>
     );
-  }
-  
-  if (!isAuthorized || !user) {
-    return null; // The hook will handle redirection
   }
 
   const renderProfileComponent = () => {
@@ -39,11 +44,22 @@ const Profile = () => {
   };
 
   return (
-    <MobileLayout title="My Profile">
-      <div className="container mx-auto max-w-4xl">
+    <MobilePage 
+      title="My Profile" 
+      refreshable
+      onRefresh={handleRefresh}
+      isLoading={refreshing}
+      loadingText="Refreshing profile..."
+      rightAction={
+        <Button size="icon" variant="ghost" className="rounded-full">
+          <Settings size={20} />
+        </Button>
+      }
+    >
+      <div className="pb-6">
         {renderProfileComponent()}
       </div>
-    </MobileLayout>
+    </MobilePage>
   );
 };
 

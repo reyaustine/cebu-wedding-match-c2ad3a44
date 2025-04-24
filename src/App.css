@@ -1,175 +1,291 @@
 
-/* Base mobile-first styles */
+/* Native mobile app styling */
 :root {
-  --app-header-height: 3.75rem;
-  --app-footer-height: 4rem;
+  /* System variables */
   --safe-area-top: env(safe-area-inset-top, 0);
   --safe-area-bottom: env(safe-area-inset-bottom, 0);
   --safe-area-left: env(safe-area-inset-left, 0);
   --safe-area-right: env(safe-area-inset-right, 0);
+  
+  /* App variables */
+  --app-header-height: 56px;
+  --app-footer-height: 56px;
+  --app-bg-color: #f8fafc;
+  --app-primary-color: #ec4899;
+  --app-text-color: #1f2937;
+  
+  /* Animation speeds */
+  --animation-fast: 150ms;
+  --animation-medium: 250ms;
+  --animation-slow: 350ms;
 }
 
-/* Global app container */
-.app-container {
+/* Core app structure */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--app-bg-color);
+  overscroll-behavior-y: none;
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+}
+
+/* App container */
+.app-shell {
+  position: relative;
+  height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  max-width: 100vw;
+  background-color: var(--app-bg-color);
+}
+
+/* Content area */
+.app-content {
+  flex: 1;
+  overflow-y: auto;
   overflow-x: hidden;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  z-index: 10;
   padding-top: var(--safe-area-top);
+  margin-bottom: calc(var(--safe-area-bottom) + var(--app-footer-height));
+}
+
+/* Safe area helpers */
+.pt-safe {
+  padding-top: var(--safe-area-top);
+}
+
+.pb-safe {
   padding-bottom: var(--safe-area-bottom);
+}
+
+.pl-safe {
   padding-left: var(--safe-area-left);
+}
+
+.pr-safe {
   padding-right: var(--safe-area-right);
 }
 
-/* Main content area that pushes footer to bottom */
-.app-content {
-  flex-grow: 1;
+/* Page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity var(--animation-medium) ease-out, 
+              transform var(--animation-medium) ease-out;
+}
+
+.page-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity var(--animation-medium) ease-in, 
+              transform var(--animation-medium) ease-in;
+}
+
+/* Card styles with haptic feedback */
+.mobile-card {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 16px;
+  transition: transform var(--animation-fast) cubic-bezier(0.34, 1.56, 0.64, 1);
+  touch-action: manipulation;
+}
+
+.mobile-card:active {
+  transform: scale(0.98);
+}
+
+/* Button styles with haptic feedback */
+.mobile-btn {
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+.mobile-btn:active {
+  transform: scale(0.96);
+}
+
+.mobile-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  transition: opacity var(--animation-fast) ease-out;
+}
+
+.mobile-btn:active::after {
+  opacity: 0.1;
+}
+
+/* Form controls */
+.mobile-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  font-size: 16px; /* Prevent iOS zoom */
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  color: var(--app-text-color);
+}
+
+.mobile-input:focus {
+  outline: none;
+  border-color: var(--app-primary-color);
+  box-shadow: 0 0 0 1px var(--app-primary-color);
+}
+
+/* Hide scrollbars while keeping functionality */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* iOS-style lists */
+.ios-list {
+  margin: 0;
   padding: 0;
+  list-style: none;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-/* Safe area for content below fixed headers */
-.safe-area-top {
-  padding-top: calc(var(--app-header-height) + var(--safe-area-top));
-}
-
-/* Safe area for content above fixed footers */
-.safe-area-bottom {
-  padding-bottom: calc(var(--app-footer-height) + var(--safe-area-bottom));
-}
-
-/* Prevent overflow and maintain mobile height */
-.mobile-height-viewport {
-  height: 100vh;
-  height: -webkit-fill-available;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Style for mobile bottom tabs */
-.mobile-tabs {
+.ios-list-item {
+  padding: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
-  justify-content: space-around;
   align-items: center;
+}
+
+.ios-list-item:last-child {
+  border-bottom: none;
+}
+
+.ios-list-title {
+  font-weight: 500;
+  font-size: 17px;
+  color: var(--app-text-color);
+}
+
+.ios-list-subtitle {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Mobile tab bar specifics */
+.tab-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: white;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 50;
+  background-color: white;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
   height: var(--app-footer-height);
   padding-bottom: var(--safe-area-bottom);
-}
-
-/* Remove blue highlight on mobile touch */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Add native-like momentum scrolling */
-.native-scroll {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* Hide scrollbar for cleaner mobile UI */
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* Support for mobile notches and dynamic islands */
-@supports (padding: max(0px)) {
-  .notch-safe-area {
-    padding-left: max(1rem, env(safe-area-inset-left));
-    padding-right: max(1rem, env(safe-area-inset-right));
-  }
-  
-  .bottom-safe-area {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
-  }
-}
-
-/* Mobile-specific styles */
-.mobile-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--app-header-height);
-  display: flex;
-  align-items: center;
-  padding: 0 1rem;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
   z-index: 40;
-  padding-top: var(--safe-area-top);
 }
 
-/* Make mobile buttons feel more native */
-.mobile-btn {
-  touch-action: manipulation;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-
-.mobile-btn:active {
-  transform: scale(0.97);
-}
-
-/* Add iOS-style pull to refresh space */
-.pull-to-refresh {
-  margin-top: -50px;
-  height: 50px;
+.tab-item {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.6);
+  transition: color var(--animation-fast) ease-out;
 }
 
-/* Legacy styles kept for compatibility */
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.tab-item.active {
+  color: var(--app-primary-color);
 }
 
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+.tab-icon {
+  margin-bottom: 4px;
+  position: relative;
 }
 
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Loader for pull-to-refresh */
+.ptr-loader {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--app-primary-color);
+  animation: ptr-spin 0.7s linear infinite;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+@keyframes ptr-spin {
+  to { transform: rotate(360deg); }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* Wedding-specific custom variables */
+:root {
+  --wedding-text: #6b7280;
+  --wedding-bg: #f9fafb;
+  --wedding-primary: #ec4899;
+  --wedding-secondary: #f59e0b;
+  --wedding-accent: #fd92d6;
+  --wedding-border: #e5e7eb;
+  --wedding-card: #ffffff;
 }
 
-.card {
-  padding: 2em;
+/* Utility for native-like ripple effect */
+.ripple {
+  position: relative;
+  overflow: hidden;
 }
 
-.read-the-docs {
-  color: #888;
+.ripple::after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, #000 10%, transparent 10%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 1s;
+}
+
+.ripple:active::after {
+  transform: scale(0, 0);
+  opacity: 0.2;
+  transition: 0s;
 }

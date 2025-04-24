@@ -4,9 +4,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { AppShell } from "./components/layout/AppShell";
 
 // Import all the page components
 import Home from "./pages/Home";
@@ -92,11 +92,8 @@ const StatusRoute = ({ children, requiredStatus }: {
 };
 
 const AppContent = () => {
-  const { user } = useAuth();
-  const showBottomNav = user && window.location.pathname !== '/';
-
   return (
-    <div className="app-container">
+    <AppShell>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/suppliers" element={<SupplierDirectory />} />
@@ -177,10 +174,7 @@ const AppContent = () => {
         />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {showBottomNav && <MobileBottomNav />}
-      <Toaster />
-      <Sonner />
-    </div>
+    </AppShell>
   );
 };
 
@@ -190,6 +184,8 @@ const App = () => (
       <AuthProvider>
         <TooltipProvider>
           <AppContent />
+          <Toaster />
+          <Sonner />
         </TooltipProvider>
       </AuthProvider>
     </BrowserRouter>

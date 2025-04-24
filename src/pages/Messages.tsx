@@ -1,31 +1,48 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
-import { Loader2 } from 'lucide-react';
-import { MobileLayout } from '@/components/layout/MobileLayout';
+import { MobilePage } from '@/components/layout/MobilePage';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 const Messages = () => {
   const { isAuthorized, loading } = useProtectedRoute();
+  const [refreshing, setRefreshing] = useState(false);
   
-  if (loading) {
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Simulate a refresh
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setRefreshing(false);
+  };
+  
+  if (loading || !isAuthorized) {
     return (
-      <MobileLayout isLoading={true} loadingText="Loading messages...">
+      <MobilePage isLoading loadingText="Loading messages...">
         <></>
-      </MobileLayout>
+      </MobilePage>
     );
   }
 
-  if (!isAuthorized) {
-    return null; // The hook will handle redirection
-  }
-
   return (
-    <MobileLayout title="Messages">
+    <MobilePage 
+      title="Messages"
+      refreshable
+      onRefresh={handleRefresh}
+      isLoading={refreshing}
+      loadingText="Refreshing messages..."
+      fullHeight
+      rightAction={
+        <Button size="icon" variant="ghost" className="rounded-full">
+          <Plus size={20} />
+        </Button>
+      }
+    >
       <div className="h-[calc(100vh-7rem)]">
         <ChatInterface />
       </div>
-    </MobileLayout>
+    </MobilePage>
   );
 };
 

@@ -1,26 +1,32 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ClientBookings } from '@/components/bookings/ClientBookings';
 import { SupplierBookings } from '@/components/bookings/SupplierBookings'; 
 import { PlannerBookings } from '@/components/bookings/PlannerBookings';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
-import { MobileLayout } from '@/components/layout/MobileLayout';
+import { MobilePage } from '@/components/layout/MobilePage';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 const Bookings = () => {
-  const { user, isAuthorized, loading } = useProtectedRoute();
+  const { user } = useAuth();
+  const { isAuthorized, loading } = useProtectedRoute();
+  const [refreshing, setRefreshing] = useState(false);
   
-  if (loading) {
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Simulate a refresh
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setRefreshing(false);
+  };
+  
+  if (loading || !isAuthorized || !user) {
     return (
-      <MobileLayout isLoading={true} loadingText="Loading bookings...">
+      <MobilePage isLoading loadingText="Loading bookings...">
         <></>
-      </MobileLayout>
+      </MobilePage>
     );
-  }
-  
-  if (!isAuthorized || !user) {
-    return null; // The hook will handle redirection
   }
 
   const renderBookingsComponent = () => {
@@ -36,12 +42,26 @@ const Bookings = () => {
     }
   };
 
+  // Only show add button for clients
+  const rightAction = user.role === 'client' ? (
+    <Button size="icon" variant="ghost" className="rounded-full">
+      <Plus size={20} />
+    </Button>
+  ) : undefined;
+
   return (
-    <MobileLayout title="My Bookings">
-      <div className="container mx-auto max-w-6xl">
+    <MobilePage 
+      title="My Bookings" 
+      refreshable
+      onRefresh={handleRefresh}
+      isLoading={refreshing}
+      loadingText="Refreshing bookings..."
+      rightAction={rightAction}
+    >
+      <div className="pb-6">
         {renderBookingsComponent()}
       </div>
-    </MobileLayout>
+    </MobilePage>
   );
 };
 

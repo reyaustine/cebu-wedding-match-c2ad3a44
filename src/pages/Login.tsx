@@ -1,19 +1,17 @@
 
 import { useState } from "react";
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { MobilePage } from "@/components/layout/MobilePage";
 
 // Form validation schema
 const loginSchema = z.object({
@@ -26,6 +24,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const Login = () => {
   const { login } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -39,6 +38,7 @@ const Login = () => {
     setIsSubmitting(true);
     try {
       await login(data.email, data.password);
+      navigate('/dashboard');
     } catch (error) {
       console.error("Login error:", error);
     } finally {
@@ -47,101 +47,106 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <NavBar />
-      <main className="flex-grow flex items-center justify-center bg-gray-50 py-12">
-        <div className="container px-4">
-          <Card className="max-w-md mx-auto">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-serif font-bold text-wedding-800">Welcome Back</CardTitle>
-              <CardDescription>Sign in to your TheWeddingMatch account</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Google Sign-In Button */}
-              <GoogleSignInButton className="mb-6" />
-              
-              <div className="relative my-4">
-                <Separator />
-                <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-gray-500">
-                  OR
-                </span>
-              </div>
-            
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="email" 
-                            placeholder="your@email.com" 
-                            {...field} 
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between">
-                          <FormLabel>Password</FormLabel>
-                          <Link to="/forgot-password" className="text-xs text-wedding-600 hover:underline">
-                            Forgot password?
-                          </Link>
-                        </div>
-                        <FormControl>
-                          <Input 
-                            type="password" 
-                            {...field} 
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <Button 
-                    type="submit" 
-                    className="wedding-btn w-full"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing in...
-                      </>
-                    ) : (
-                      "Sign In"
-                    )}
-                  </Button>
-                </form>
-              </Form>
-              
-              <div className="mt-6 text-center text-sm">
-                <p>
-                  Don't have an account?{" "}
-                  <Link to="/register" className="text-wedding-600 hover:underline font-medium">
-                    Create an account
-                  </Link>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+    <MobilePage fullHeight>
+      <div className="flex flex-col h-full pt-8 px-4">
+        {/* App Logo */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-serif font-bold mb-2">
+            <span className="text-wedding-500">Wedding</span>Match
+          </h1>
+          <p className="text-gray-600">Sign in to continue</p>
         </div>
-      </main>
-      <Footer />
-    </div>
+        
+        {/* Login Form */}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                      <Input 
+                        type="email" 
+                        placeholder="Email" 
+                        className="h-12 pl-10 rounded-xl" 
+                        {...field} 
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                      <Input 
+                        type="password" 
+                        placeholder="Password"
+                        className="h-12 pl-10 rounded-xl" 
+                        {...field} 
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <div className="text-right">
+              <Link to="/forgot-password" className="text-sm text-wedding-600">
+                Forgot password?
+              </Link>
+            </div>
+            
+            <Button 
+              type="submit" 
+              className="w-full h-12 rounded-xl bg-wedding-500 hover:bg-wedding-600 text-white"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+          </form>
+        </Form>
+        
+        <div className="relative my-6">
+          <Separator />
+          <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-gray-500">
+            OR CONTINUE WITH
+          </span>
+        </div>
+        
+        <GoogleSignInButton className="h-12 rounded-xl" />
+        
+        {/* Register Link */}
+        <div className="mt-auto mb-8 pb-4 text-center">
+          <p className="text-gray-600">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-wedding-600 font-medium">
+              Create an account
+            </Link>
+          </p>
+        </div>
+      </div>
+    </MobilePage>
   );
 };
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
 import { SupplierDashboard } from "@/components/dashboard/SupplierDashboard";
@@ -16,12 +15,10 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   
-  // Check if user is logged in and set role
   useEffect(() => {
     if (loading) return;
     
     if (user) {
-      // Check if user should be on verification or onboarding page
       const status = user.verificationStatus;
       if (status === "unverified") {
         navigate(`/verification/${user.id}`);
@@ -31,7 +28,6 @@ const Dashboard = () => {
         return;
       }
     } else {
-      // Redirect to login if no user is found
       toast.error("Please log in to access the dashboard");
       navigate("/login");
     }
@@ -39,13 +35,11 @@ const Dashboard = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Simulate refresh
     await new Promise(resolve => setTimeout(resolve, 1500));
     setRefreshing(false);
     toast.success("Dashboard refreshed");
   };
 
-  // Show loading while checking auth
   if (loading) {
     return (
       <MobilePage isLoading loadingText="Loading your dashboard...">
@@ -74,7 +68,7 @@ const Dashboard = () => {
   return (
     <MobilePage 
       title={`Welcome, ${user?.firstName || 'User'}`}
-      subtitle={`Your ${user?.role || 'user'} dashboard`}
+      subtitle={`${user?.role || 'user'} dashboard`}
       refreshable
       onRefresh={handleRefresh}
       isLoading={refreshing}

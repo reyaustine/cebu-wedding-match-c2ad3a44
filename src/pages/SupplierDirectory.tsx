@@ -1,4 +1,9 @@
 
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
+import { MobilePage } from "@/components/layout/MobilePage";
+import { SupplierCategories } from "@/components/SupplierCategories";
+
 const SupplierDirectory = () => {
   return (
     <MobilePage 

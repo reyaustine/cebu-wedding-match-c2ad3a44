@@ -94,22 +94,22 @@ export function MobilePage({
       {/* Header */}
       {(title || backButton || rightAction) && (
         <div className={cn(
-          "py-4 px-4 flex items-center justify-between",
+          "py-4 px-4 flex items-center justify-between bg-white border-b border-gray-100",
           headerClassName
         )}>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1">
             {backButton && (
               <button 
-                className="w-8 h-8 flex items-center justify-center rounded-full"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50"
                 onClick={handleBack}
               >
-                <ChevronLeft size={24} />
+                <ChevronLeft size={24} className="text-gray-700" />
               </button>
             )}
             
             {title && (
-              <div>
-                <h1 className="text-xl font-medium text-gray-900">{title}</h1>
+              <div className="flex-1">
+                <h1 className="text-xl font-medium text-gray-900 leading-snug">{title}</h1>
                 {subtitle && (
                   <p className="text-sm text-gray-500">{subtitle}</p>
                 )}
@@ -126,8 +126,8 @@ export function MobilePage({
       {/* Content area with pull-to-refresh */}
       <div 
         className={cn(
-          "relative flex-1 overflow-y-auto overflow-x-hidden",
-          fullWidth ? "" : "px-4"
+          "relative flex-1 overflow-y-auto overflow-x-hidden bg-gray-50",
+          fullWidth ? "" : "px-4 py-4"
         )}
         style={{ paddingTop: pullDistance ? `${pullDistance}px` : undefined }}
         ref={setContentRef}

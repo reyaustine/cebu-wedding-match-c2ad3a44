@@ -17,15 +17,15 @@ export function AppShell({ children }: AppShellProps) {
   const fullscreenPages = ["/login", "/register", "/verification"];
   const isFullscreenPage = fullscreenPages.some(page => location.pathname.startsWith(page));
   
-  // Auth pages that should have a different layout (only top navbar)
-  const authPages = ["/", "/about", "/suppliers"];
-  const isAuthPage = authPages.some(page => location.pathname === page);
+  // Pages that use MobilePage component with their own navigation
+  const mobilePageRoutes = ["/about", "/suppliers", "/services", "/messages", "/profile", "/bookings"];
+  const usesMobilePageNav = mobilePageRoutes.some(route => location.pathname.startsWith(route));
   
   // Only show navigation when authenticated
   const showBottomNav = user && !isFullscreenPage;
   
-  // Don't show top nav bar on pages that use MobilePage component
-  const hideTopNav = isFullscreenPage || location.pathname === "/" || location.pathname === "/about" || location.pathname === "/suppliers";
+  // Don't show top nav bar on pages that use MobilePage component or fullscreen pages
+  const hideTopNav = isFullscreenPage || usesMobilePageNav || location.pathname === "/";
   
   return (
     <div className="app-shell h-full w-full flex flex-col bg-slate-50">

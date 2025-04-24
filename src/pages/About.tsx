@@ -1,11 +1,13 @@
-
 import { MobileNavBar } from "@/components/layout/MobileNavBar";
 import { Link } from "react-router-dom";
 import { MobilePage } from "@/components/layout/MobilePage";
 
 const About = () => {
   return (
-    <MobilePage title="About Us">
+    <MobilePage 
+      title="About Us"
+      backButton={true}
+    >
       <section className="space-y-6">
         <div className="space-y-4">
           <h2 className="text-2xl font-serif font-bold text-wedding-800">Our Mission</h2>

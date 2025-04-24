@@ -1,37 +1,36 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { ServicePackageList } from '@/components/services/ServicePackageList';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
-import { Loader2 } from 'lucide-react';
+import { MobilePage } from '@/components/layout/MobilePage';
 
 const Services = () => {
   const { isAuthorized, loading } = useProtectedRoute({ 
     requiredRoles: ['supplier']
   });
 
-  if (loading) {
+  if (loading || !isAuthorized) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <main className="flex-grow flex items-center justify-center">
-          <div className="flex flex-col items-center">
-            <Loader2 className="h-8 w-8 animate-spin text-wedding-500" />
-            <p className="mt-4 text-gray-600">Loading...</p>
-          </div>
-        </main>
-      </div>
+      <MobilePage 
+        title="Services"
+        backButton={true}
+        isLoading={loading}
+        loadingText="Loading..."
+      >
+        <></>
+      </MobilePage>
     );
   }
 
-  if (!isAuthorized) {
-    return null; // The hook will handle redirection
-  }
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <main className="flex-grow p-6 bg-gray-50">
+    <MobilePage 
+      title="Services"
+      backButton={true}
+    >
+      <div className="pb-6">
         <ServicePackageList />
-      </main>
-    </div>
+      </div>
+    </MobilePage>
   );
 };
 

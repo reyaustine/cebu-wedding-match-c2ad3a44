@@ -11,7 +11,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, Menu, X } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-responsive";
 import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
@@ -101,7 +101,7 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col">
       {/* Mobile header with menu button */}
       <header className="md:hidden bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div className="flex items-center justify-between px-4 py-2">
+        <div className="flex items-center justify-between px-4 py-3">
           <h1 className="text-xl font-serif font-bold text-wedding-800">
             The<span className="text-wedding-500">Wedding</span>Match
           </h1>
@@ -111,25 +111,27 @@ const Dashboard = () => {
             className="rounded-full"
             onClick={toggleSidebar}
           >
-            {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </Button>
         </div>
       </header>
       
       <main className="flex-grow flex">
-        {/* Sidebar - conditionally shown on mobile */}
-        <div className={`
-          ${sidebarOpen ? 'block' : 'hidden'} 
-          md:block
-          fixed md:relative 
-          inset-0 md:inset-auto
-          z-40 md:z-auto
-          w-[80%] md:w-auto
-          bg-white
-          h-full
-          transition-all 
-          duration-300
-        `}>
+        {/* Sidebar - conditionally shown on mobile with overlay */}
+        <div 
+          className={`
+            fixed md:static 
+            inset-y-0 left-0
+            z-40 md:z-0
+            w-[280px] md:w-auto max-w-[80%] md:max-w-none
+            bg-white
+            transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
+            transition-transform duration-300 ease-in-out
+            h-full
+            shadow-lg md:shadow-none
+            overflow-y-auto
+          `}
+        >
           <DashboardSidebar userRole={userRole} onRoleChange={handleRoleChange} />
         </div>
         
@@ -143,7 +145,7 @@ const Dashboard = () => {
         
         {/* Main content area */}
         <div 
-          className="flex-grow p-4 md:p-6 bg-gray-50 min-h-[calc(100vh-4rem)] w-full overflow-y-auto"
+          className="flex-grow w-full p-4 md:p-6 bg-gray-50 min-h-[calc(100vh-3.75rem)] md:min-h-[calc(100vh-4rem)] overflow-y-auto"
           onClick={closeSidebar}
         >
           {renderDashboardContent()}

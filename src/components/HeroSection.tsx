@@ -1,51 +1,55 @@
 
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-responsive";
 
 export const HeroSection = () => {
+  const isMobile = useIsMobile();
+
   return (
     <section className="relative w-full bg-gradient-to-b from-wedding-50 to-white">
-      <div className="container px-4 py-16 md:py-24 flex flex-col items-center text-center">
+      <div className="container px-4 py-12 md:py-24 flex flex-col items-center text-center">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-wedding-900 leading-tight">
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold text-wedding-900 leading-tight">
             Find Trusted Wedding Suppliers in <span className="text-wedding-600">Cebu</span>
           </h1>
-          <p className="mt-6 text-lg text-gray-700 md:text-xl max-w-2xl mx-auto">
+          <p className="mt-4 md:mt-6 text-base md:text-lg text-gray-700 max-w-2xl mx-auto">
             Connect with verified wedding professionals for your special day. 
             We ensure every supplier is trusted, reliable, and ready to make your dream wedding a reality.
           </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/register" className="wedding-btn text-lg px-8 py-3">
+          <div className="mt-8 md:mt-10 flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/register" className="wedding-btn text-base md:text-lg px-6 md:px-8 py-2.5 md:py-3 w-full sm:w-auto">
               Start Planning
             </Link>
-            <Link to="/suppliers" className="wedding-btn-outline text-lg px-8 py-3">
+            <Link to="/suppliers" className="wedding-btn-outline text-base md:text-lg px-6 md:px-8 py-2.5 md:py-3 w-full sm:w-auto">
               Browse Suppliers
             </Link>
           </div>
-          <div className="mt-12 flex flex-wrap justify-center gap-6">
+          
+          <div className="mt-8 md:mt-12 flex flex-wrap justify-center gap-4 md:gap-6">
             <div className="flex items-center gap-2">
               <div className="bg-green-100 p-1 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span className="text-sm font-medium">100% Verified Suppliers</span>
+              <span className="text-xs md:text-sm font-medium">100% Verified Suppliers</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="bg-green-100 p-1 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span className="text-sm font-medium">Scam-Free Platform</span>
+              <span className="text-xs md:text-sm font-medium">Scam-Free Platform</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="bg-green-100 p-1 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span className="text-sm font-medium">Cebu City-Focused</span>
+              <span className="text-xs md:text-sm font-medium">Cebu City-Focused</span>
             </div>
           </div>
         </div>

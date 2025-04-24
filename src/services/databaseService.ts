@@ -19,12 +19,37 @@ import {
   serverTimestamp,
   Timestamp,
   WhereFilterOp,
-  QuerySnapshot
+  QuerySnapshot,
+  enableNetwork,
+  disableNetwork,
+  enableIndexedDbPersistence
 } from "firebase/firestore";
 import { errorHandler } from "./errorHandlingService";
+import { toast } from "sonner";
+
+// Enable offline persistence for better mobile experience
+try {
+  enableIndexedDbPersistence(db)
+    .then(() => {
+      console.log("Firestore persistence enabled");
+    })
+    .catch((err) => {
+      console.error("Failed to enable Firestore persistence:", err);
+      if (err.code === 'failed-precondition') {
+        // Multiple tabs open, persistence can only be enabled in one tab at a time.
+        console.warn("Multiple tabs open, persistence only enabled in one tab.");
+      } else if (err.code === 'unimplemented') {
+        // The current browser does not support all of the
+        // features required to enable persistence
+        console.warn("Current browser doesn't support persistence.");
+      }
+    });
+} catch (err) {
+  console.error("Error configuring persistence:", err);
+}
 
 /**
- * Database service for Firestore operations
+ * Database service for Firestore operations with mobile-optimized features
  */
 export const dbService = {
   /**
@@ -208,5 +233,23 @@ export const dbService = {
    */
   getDocRef: (collectionName: string, id: string) => {
     return doc(db, collectionName, id);
+  },
+
+  /**
+   * Toggle offline mode for testing or to save data when in poor network areas
+   */
+  setOfflineMode: async (offline: boolean): Promise<void> => {
+    try {
+      if (offline) {
+        await disableNetwork(db);
+        toast.info("App is now in offline mode");
+      } else {
+        await enableNetwork(db);
+        toast.success("App is now online");
+      }
+    } catch (error) {
+      console.error("Failed to change network status:", error);
+      toast.error("Failed to change network mode");
+    }
   }
 };

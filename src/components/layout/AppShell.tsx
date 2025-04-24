@@ -23,11 +23,13 @@ export function AppShell({ children }: AppShellProps) {
   
   // Only show navigation when authenticated
   const showBottomNav = user && !isFullscreenPage;
-  const showTopNav = (isAuthPage || !user) && !isFullscreenPage;
+  
+  // Don't show top nav bar on pages that use MobilePage component
+  const hideTopNav = isFullscreenPage || location.pathname === "/" || location.pathname === "/about" || location.pathname === "/suppliers";
   
   return (
     <div className="app-shell h-full w-full flex flex-col bg-slate-50">
-      {showTopNav && <MobileNavBar />}
+      {!hideTopNav && <MobileNavBar />}
       
       <main className="app-content">
         {children}

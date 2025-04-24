@@ -48,6 +48,13 @@ export const dbService = {
   },
 
   /**
+   * Alias for add (for compatibility)
+   */
+  create: async <T extends DocumentData>(collectionName: string, data: T): Promise<string> => {
+    return dbService.add(collectionName, data);
+  },
+
+  /**
    * Set a document with a specific ID
    */
   set: async <T extends DocumentData>(collectionName: string, id: string, data: T): Promise<void> => {
@@ -88,6 +95,13 @@ export const dbService = {
       });
       throw error;
     }
+  },
+
+  /**
+   * Alias for get (for compatibility)
+   */
+  getById: async <T = DocumentData>(collectionName: string, id: string): Promise<T | null> => {
+    return dbService.get(collectionName, id);
   },
 
   /**

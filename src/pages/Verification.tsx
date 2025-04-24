@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Footer } from "@/components/Footer";
@@ -48,7 +49,8 @@ const Verification = () => {
       }
       
       try {
-        const userData = await dbService.getById("users", userId);
+        // Use get instead of getById as we added it as an alias
+        const userData = await dbService.get("users", userId);
         
         if (!userData) {
           toast.error("User not found");

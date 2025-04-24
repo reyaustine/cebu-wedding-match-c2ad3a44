@@ -38,7 +38,7 @@ import { Calendar, MessageSquare, CheckCircle, XCircle, Info } from "lucide-reac
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { where, orderBy } from "firebase/firestore";
+import { where, orderBy, Timestamp } from "firebase/firestore";
 import { Link } from "react-router-dom";
 
 export const SupplierBookings = () => {
@@ -63,9 +63,10 @@ export const SupplierBookings = () => {
         // Convert timestamps to Date objects
         const processedBookings = bookingsData.map(booking => ({
           ...booking,
-          date: booking.date instanceof Date ? booking.date : new Date(booking.date),
-          createdAt: booking.createdAt instanceof Date ? booking.createdAt : new Date(booking.createdAt),
-          updatedAt: booking.updatedAt instanceof Date ? booking.updatedAt : new Date(booking.updatedAt),
+          date: booking.date instanceof Timestamp ? booking.date.toDate() : booking.date,
+          createdAt: booking.createdAt instanceof Timestamp ? booking.createdAt.toDate() : booking.createdAt,
+          updatedAt: booking.updatedAt instanceof Timestamp ? booking.updatedAt.toDate() : booking.updatedAt,
+          completedAt: booking.completedAt instanceof Timestamp ? booking.completedAt.toDate() : booking.completedAt
         }));
         
         setBookings(processedBookings);
@@ -125,6 +126,17 @@ export const SupplierBookings = () => {
       default: return "bg-gray-100 text-gray-800";
     }
   };
+  
+  // Helper function to safely format dates
+  const formatDate = (date: Date | Timestamp | undefined) => {
+    if (!date) return "";
+    
+    if (date instanceof Timestamp) {
+      return format(date.toDate(), 'MMM dd, yyyy');
+    }
+    
+    return format(date, 'MMM dd, yyyy');
+  };
 
   if (isLoading) {
     return (
@@ -170,7 +182,7 @@ export const SupplierBookings = () => {
                     <TableRow key={booking.id}>
                       <TableCell>{booking.clientName}</TableCell>
                       <TableCell>{booking.packageName}</TableCell>
-                      <TableCell>{format(booking.date, 'MMM dd, yyyy')}</TableCell>
+                      <TableCell>{formatDate(booking.date)}</TableCell>
                       <TableCell>₱{booking.amount.toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(booking.status)}>
@@ -204,7 +216,7 @@ export const SupplierBookings = () => {
                                   </div>
                                   <div>
                                     <h4 className="text-sm font-medium text-gray-500">Date</h4>
-                                    <p>{format(booking.date, 'MMMM dd, yyyy')}</p>
+                                    <p>{formatDate(booking.date)}</p>
                                   </div>
                                   <div>
                                     <h4 className="text-sm font-medium text-gray-500">Amount</h4>
@@ -218,7 +230,7 @@ export const SupplierBookings = () => {
                                   </div>
                                   <div>
                                     <h4 className="text-sm font-medium text-gray-500">Created</h4>
-                                    <p>{format(booking.createdAt, 'MMM dd, yyyy')}</p>
+                                    <p>{formatDate(booking.createdAt)}</p>
                                   </div>
                                 </div>
                                 {booking.notes && (

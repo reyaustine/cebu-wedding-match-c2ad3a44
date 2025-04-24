@@ -21,9 +21,11 @@ export interface ServicePackage {
 export interface Booking {
   id: string;
   clientId: string;
+  clientName: string;
   supplierId: string;
   serviceId: string;
   serviceName: string;
+  packageName: string;
   date: DateOrTimestamp;
   time: string;
   location: string;
@@ -43,9 +45,11 @@ export interface SupplierProfile {
   contactEmail: string;
   contactPhone: string;
   address: string;
+  city: string;
   categories: string[];
   logo?: string;
   coverImage?: string;
+  profileImage?: string;
   gallery: string[];
   socialLinks: {
     facebook?: string;
@@ -53,7 +57,7 @@ export interface SupplierProfile {
     website?: string;
   };
   verificationStatus: 'pending' | 'verified' | 'rejected';
-  rating: number;
+  averageRating: number;
   reviewCount: number;
   createdAt: DateOrTimestamp;
   updatedAt: DateOrTimestamp;

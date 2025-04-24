@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { Footer } from "@/components/Footer";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { UserRole } from "@/services/authService";
 import { useNavigate, useParams } from "react-router-dom";
@@ -76,7 +75,6 @@ const ServiceForm = () => {
             <p className="mt-4 text-gray-600">Loading...</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -133,7 +131,6 @@ const ServiceForm = () => {
           <PackageForm packageId={packageId} isEditMode={isEditMode} />
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from 'react';
 import { ServicePackageList } from '@/components/services/ServicePackageList';
-import { Footer } from '@/components/Footer';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { Loader2 } from 'lucide-react';
 
@@ -19,7 +18,6 @@ const Services = () => {
             <p className="mt-4 text-gray-600">Loading...</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -33,7 +31,6 @@ const Services = () => {
       <main className="flex-grow p-6 bg-gray-50">
         <ServicePackageList />
       </main>
-      <Footer />
     </div>
   );
 };

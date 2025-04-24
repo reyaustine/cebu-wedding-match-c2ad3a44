@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Footer } from "@/components/Footer";
 import { OnboardingStatus as StatusDisplay } from "@/components/verification/OnboardingStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
@@ -42,7 +41,6 @@ const OnboardingStatus = () => {
             <p className="mt-4 text-gray-600">Loading status...</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -54,7 +52,6 @@ const OnboardingStatus = () => {
           <StatusDisplay userRole={userRole} />
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

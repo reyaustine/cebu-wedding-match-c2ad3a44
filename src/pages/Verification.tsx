@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Footer } from "@/components/Footer";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -16,6 +15,7 @@ import { PersonalInfoForm } from "@/components/verification/PersonalInfoForm";
 import { BusinessInfoForm } from "@/components/verification/BusinessInfoForm";
 import { ServiceInfoForm } from "@/components/verification/ServiceInfoForm";
 import { ReviewInfoForm } from "@/components/verification/ReviewInfoForm";
+import { VerificationContainer } from "@/components/verification/VerificationContainer";
 import { toast } from "sonner";
 import { dbService } from "@/services/databaseService";
 import { where } from "firebase/firestore";
@@ -49,7 +49,6 @@ const Verification = () => {
       }
       
       try {
-        // Use get instead of getById as we added it as an alias
         const userData = await dbService.get("users", userId);
         
         if (!userData) {
@@ -240,46 +239,6 @@ const Verification = () => {
     }
   };
   
-  const renderStepIndicator = () => {
-    const totalSteps = userRole === "client" ? 2 : 4;
-    
-    return (
-      <div className="flex justify-center mb-8">
-        <div className="flex items-center space-x-2">
-          {[...Array(totalSteps)].map((_, index) => {
-            const stepNumber = index + 1;
-            const isActive = currentStep === stepNumber;
-            const isCompleted = currentStep > stepNumber;
-            
-            return (
-              <div key={`step-${stepNumber}`} className="flex items-center">
-                {index > 0 && (
-                  <div 
-                    className={`h-1 w-6 mx-1 ${
-                      isCompleted ? "bg-wedding-600" : "bg-gray-200"
-                    }`}
-                  />
-                )}
-                
-                <div 
-                  className={`rounded-full flex items-center justify-center h-8 w-8 text-sm font-medium ${
-                    isActive 
-                      ? "bg-wedding-600 text-white"
-                      : isCompleted
-                        ? "bg-wedding-600 text-white"
-                        : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {stepNumber}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-  
   if (isLoading || loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -289,32 +248,26 @@ const Verification = () => {
             <p className="mt-4 text-gray-600">Loading verification process...</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen flex flex-col">
-      <main className="flex-grow py-12">
-        <div className="container px-4 max-w-4xl mx-auto">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-serif font-bold text-wedding-800">
-              Account Verification
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              {userRole === "client" 
-                ? "Verify your account to start using TheWeddingMatch" 
-                : "Complete your verification to join our network of trusted wedding professionals"}
-            </p>
-          </div>
-          
-          {renderStepIndicator()}
-          {renderStepContent()}
-        </div>
-      </main>
-      <Footer />
-    </div>
+    <VerificationContainer
+      userId={userId || ""}
+      userRole={userRole}
+      currentStep={currentStep}
+      personalInfo={personalInfo}
+      businessInfo={businessInfo}
+      serviceInfo={serviceInfo}
+      onPersonalInfoSave={handlePersonalInfoSave}
+      onBusinessInfoSave={handleBusinessInfoSave}
+      onServiceInfoSave={handleServiceInfoSave}
+      onSubmitVerification={handleSubmitVerification}
+      onChangeStep={setCurrentStep}
+    >
+      {renderStepContent()}
+    </VerificationContainer>
   );
 };
 

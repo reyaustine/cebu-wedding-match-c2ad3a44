@@ -1,6 +1,5 @@
 
 import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
 import { Link } from "react-router-dom";
 
 const About = () => {
@@ -114,7 +113,6 @@ const About = () => {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 };

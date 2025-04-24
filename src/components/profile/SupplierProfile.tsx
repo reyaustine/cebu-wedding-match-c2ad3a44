@@ -99,6 +99,7 @@ export const SupplierProfile = () => {
             gallery: [],
             categories: [],
             socialLinks: {},
+            verificationStatus: 'verified',
             averageRating: 0,
             reviewCount: 0,
             createdAt: new Date(),

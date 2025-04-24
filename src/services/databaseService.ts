@@ -1,3 +1,4 @@
+
 import { db } from "@/config/firebase";
 import {
   collection,
@@ -171,10 +172,11 @@ export const dbService = {
       const q = query(collectionRef, ...queryConstraints);
       const querySnapshot = await getDocs(q);
       
+      // Fix the type conversion issue by using a proper type assertion
       return querySnapshot.docs.map(doc => ({
-        ...doc.data(),
+        ...(doc.data() as T),
         id: doc.id
-      })) as T[];
+      }));
     } catch (error) {
       errorHandler.handle(error, { 
         customMessage: `Failed to query documents in ${collectionPath}` 
@@ -191,10 +193,11 @@ export const dbService = {
       const collectionRef = collection(db, collectionName);
       const querySnapshot = await getDocs(collectionRef);
       
+      // Fix the type conversion issue by using a proper type assertion
       return querySnapshot.docs.map(doc => ({
-        ...doc.data(),
+        ...(doc.data() as T),
         id: doc.id
-      })) as T[];
+      }));
     } catch (error) {
       errorHandler.handle(error, { 
         customMessage: `Failed to fetch documents from ${collectionName}` 

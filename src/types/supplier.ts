@@ -57,9 +57,11 @@ export interface Booking {
   endTime: DateOrTimestamp;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   notes?: string;
-  totalAmount: number;
+  totalAmount: number; // Renamed from the originally used amount field
+  amount: number; // Adding amount to maintain compatibility with existing code
   paymentStatus: 'pending' | 'partial' | 'paid';
   paymentMethod?: string;
   createdAt: DateOrTimestamp;
   updatedAt: DateOrTimestamp;
+  completedAt?: DateOrTimestamp; // Added completedAt field needed in SupplierBookings.tsx
 }

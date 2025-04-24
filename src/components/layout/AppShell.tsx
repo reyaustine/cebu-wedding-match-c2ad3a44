@@ -1,6 +1,7 @@
 
 import React, { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
+import { NavBar } from "../NavBar";
 import { MobileNavBar } from "./MobileNavBar"; 
 import { MobileTabBar } from "./MobileTabBar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,20 +19,21 @@ export function AppShell({ children }: AppShellProps) {
   const isFullscreenPage = fullscreenPages.some(page => location.pathname.startsWith(page));
   
   // Pages that use MobilePage component with their own navigation
-  const mobilePageRoutes = ["/about", "/suppliers", "/services", "/messages", "/profile", "/bookings"];
+  const mobilePageRoutes = ["/suppliers", "/services", "/messages", "/profile", "/bookings"];
   const usesMobilePageNav = mobilePageRoutes.some(route => location.pathname.startsWith(route));
   
-  // Only show navigation when authenticated
+  // Only show bottom nav when authenticated
   const showBottomNav = user && !isFullscreenPage;
   
-  // Don't show top nav bar on pages that use MobilePage component or fullscreen pages
-  const hideTopNav = isFullscreenPage || usesMobilePageNav || location.pathname === "/";
+  // Show main header on home and about pages, and when not using MobilePage nav
+  const showMainNav = !isFullscreenPage && !usesMobilePageNav && location.pathname !== "/dashboard";
   
   return (
     <div className="app-shell h-full w-full flex flex-col bg-slate-50">
-      {!hideTopNav && <MobileNavBar />}
+      {showMainNav && <NavBar />}
+      {!showMainNav && !isFullscreenPage && usesMobilePageNav && <MobileNavBar />}
       
-      <main className="app-content">
+      <main className="app-content flex-1">
         {children}
       </main>
       

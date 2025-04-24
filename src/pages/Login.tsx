@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +47,7 @@ const Login = () => {
 
   return (
     <MobilePage fullHeight>
-      <div className="flex flex-col h-full pt-8 px-4">
+      <div className="flex flex-col h-full pt-8">
         {/* App Logo */}
         <div className="text-center mb-10">
           <h1 className="text-3xl font-serif font-bold mb-2">

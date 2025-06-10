@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { Upload, XCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Upload, XCircle, CheckCircle2, Loader2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { storageService } from "@/services/storageService";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ export const FileUpload = ({
   const [isUploading, setIsUploading] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | undefined>(existingUrl);
   const [error, setError] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +45,7 @@ export const FileUpload = ({
     
     setError(null);
     setIsUploading(true);
+    setFileName(file.name);
     
     try {
       // Upload to Firebase Storage
@@ -74,11 +76,16 @@ export const FileUpload = ({
   
   const clearFile = () => {
     setFileUrl(undefined);
+    setFileName("");
     onFileUploaded("");
   };
   
   const triggerFileInput = () => {
     fileInputRef.current?.click();
+  };
+  
+  const isImageFile = (url: string) => {
+    return url && (url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || url.includes('image%2F'));
   };
   
   return (
@@ -125,21 +132,62 @@ export const FileUpload = ({
           )}
         </div>
       ) : (
-        <div className="border rounded-md p-3 flex items-center justify-between">
-          <div className="flex items-center">
-            <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-            <span className="text-sm truncate">File uploaded successfully</span>
+        <div className="border rounded-md p-3">
+          <div className="flex items-start justify-between gap-3">
+            {/* Thumbnail and file info */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+              
+              {/* Thumbnail preview for images */}
+              {isImageFile(fileUrl) && (
+                <div className="w-12 h-12 rounded border overflow-hidden flex-shrink-0">
+                  <img 
+                    src={fileUrl} 
+                    alt="Uploaded file preview" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-green-700 truncate">
+                  File uploaded successfully
+                </p>
+                {fileName && (
+                  <p className="text-xs text-gray-500 truncate mt-1">
+                    {fileName}
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            {/* Actions */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {isImageFile(fileUrl) && (
+                <Button 
+                  type="button"
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => window.open(fileUrl, '_blank')}
+                  className="text-gray-500 hover:text-gray-700 h-8 w-8 p-0"
+                  title="View full image"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              )}
+              
+              <Button 
+                type="button"
+                variant="ghost" 
+                size="sm" 
+                onClick={clearFile}
+                className="text-destructive hover:text-destructive/90 h-8 w-8 p-0"
+                title="Remove file"
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          
-          <Button 
-            type="button"
-            variant="ghost" 
-            size="sm" 
-            onClick={clearFile}
-            className="text-destructive hover:text-destructive/90"
-          >
-            <XCircle className="h-4 w-4" />
-          </Button>
         </div>
       )}
     </div>

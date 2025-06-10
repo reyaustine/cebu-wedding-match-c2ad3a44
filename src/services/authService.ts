@@ -1,4 +1,3 @@
-
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
@@ -11,7 +10,7 @@ import {
   updatePassword
 } from "firebase/auth";
 import { auth, db } from "@/config/firebase";
-import { collection, doc, getDoc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, doc, getDoc, setDoc, serverTimestamp, Timestamp, query, where, getDocs } from "firebase/firestore";
 
 export type UserRole = 'client' | 'supplier' | 'planner' | 'admin';
 
@@ -297,19 +296,20 @@ export const saveUserVerificationData = async (
   data: PersonalInfo | BusinessInfo | ServiceInfo
 ) => {
   try {
-    const userVerificationRef = doc(collection(db, 'userVerifications'));
-    
     // Check if user already has verification data
-    const userVerifications = await collection(db, 'userVerifications');
-    const userVerificationQuery = await userVerifications;
-    const existingDocs = await userVerificationQuery;
+    const verificationQuery = query(
+      collection(db, 'userVerifications'),
+      where('userId', '==', userId)
+    );
+    const existingDocs = await getDocs(verificationQuery);
     
-    // If user has existing verification data, update it
-    if (existingDocs) {
+    if (!existingDocs.empty) {
+      // Update existing verification data
+      const docId = existingDocs.docs[0].id;
+      const docRef = doc(db, 'userVerifications', docId);
       await setDoc(
-        userVerificationRef, 
+        docRef, 
         { 
-          userId, 
           [dataType]: data, 
           updatedAt: new Date(),
           status: 'draft'
@@ -318,6 +318,7 @@ export const saveUserVerificationData = async (
       );
     } else {
       // Create new verification data
+      const userVerificationRef = doc(collection(db, 'userVerifications'));
       await setDoc(
         userVerificationRef,
         {
@@ -348,13 +349,17 @@ export const submitVerificationForReview = async (userId: string, userRole: User
     );
     
     // Update verification data status to 'submitted'
-    const userVerifications = await collection(db, 'userVerifications');
-    const userVerificationQuery = await userVerifications;
-    const existingDocs = await userVerificationQuery;
+    const verificationQuery = query(
+      collection(db, 'userVerifications'),
+      where('userId', '==', userId)
+    );
+    const existingDocs = await getDocs(verificationQuery);
     
-    if (existingDocs) {
+    if (!existingDocs.empty) {
+      const docId = existingDocs.docs[0].id;
+      const docRef = doc(db, 'userVerifications', docId);
       await setDoc(
-        doc(db, 'userVerifications', existingDocs.id),
+        docRef,
         {
           status: 'submitted',
           submittedAt: new Date()

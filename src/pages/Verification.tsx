@@ -57,12 +57,14 @@ const Verification = () => {
         }
         
         const status = await checkVerificationStatus(userId);
+        console.log("User verification status:", status);
         
         if (status === "verified") {
           toast.success("Your account is already verified!");
           navigate("/dashboard");
           return;
         } else if (status === "onboarding") {
+          console.log("User is in onboarding status, redirecting to onboarding-status page");
           navigate("/onboarding-status");
           return;
         }
@@ -80,6 +82,17 @@ const Verification = () => {
           if (verifications && verifications.length > 0) {
             const data = verifications[0];
             console.log("Found existing verification data:", data);
+            
+            // If verification was already submitted, redirect to onboarding status
+            if (data.status === "submitted" || data.status === "onboarding") {
+              console.log("Verification already submitted, redirecting to onboarding status");
+              // Update user status to onboarding if not already set
+              await dbService.set("users", userId, { 
+                verificationStatus: "onboarding" 
+              });
+              navigate("/onboarding-status");
+              return;
+            }
             
             if (data.personalInfo) {
               setPersonalInfo(data.personalInfo);

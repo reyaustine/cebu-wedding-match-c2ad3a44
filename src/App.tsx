@@ -45,6 +45,12 @@ const ProtectedRoute = ({ children, allowedStatuses = ["verified"] }: {
     return <Navigate to="/login" replace />;
   }
   
+  // Admin users bypass all verification checks
+  const isAdmin = user.role === "admin" || user.email === "reyaustine123@gmail.com";
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+  
   const userStatus = user.verificationStatus || "unverified";
   if (!allowedStatuses.includes(userStatus)) {
     if (userStatus === "unverified") {
@@ -74,6 +80,12 @@ const StatusRoute = ({ children, requiredStatus }: {
   
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // Admin users bypass verification checks
+  const isAdmin = user.role === "admin" || user.email === "reyaustine123@gmail.com";
+  if (isAdmin) {
+    return <Navigate to="/dashboard" replace />;
   }
   
   const userStatus = user.verificationStatus || "unverified";
@@ -193,4 +205,3 @@ const App = () => (
 );
 
 export default App;
-

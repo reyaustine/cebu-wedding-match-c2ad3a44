@@ -38,9 +38,13 @@ const Verification = () => {
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null);
   const [serviceInfo, setServiceInfo] = useState<ServiceInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasCheckedUser, setHasCheckedUser] = useState(false);
   
   useEffect(() => {
     const checkUser = async () => {
+      // Prevent multiple checks
+      if (hasCheckedUser || loading) return;
+      
       if (!userId) {
         toast.error("User ID is required");
         navigate("/login");
@@ -48,11 +52,12 @@ const Verification = () => {
       }
       
       try {
-        // Check if current user is admin - redirect to dashboard immediately
+        setHasCheckedUser(true);
+        
+        // First check if current user is admin - redirect immediately
         if (user && (user.role === "admin" || user.email === "reyaustine123@gmail.com")) {
-          console.log("Admin user detected, redirecting to dashboard");
-          toast.success("Welcome back, admin!");
-          navigate("/dashboard");
+          console.log("Admin user detected in verification, redirecting to dashboard");
+          navigate("/dashboard", { replace: true });
           return;
         }
         
@@ -69,8 +74,7 @@ const Verification = () => {
         const isAdmin = (userData as any).role === "admin" || (userData as any).email === "reyaustine123@gmail.com";
         if (isAdmin) {
           console.log("Admin user detected from database, redirecting to dashboard");
-          toast.success("Welcome back, admin!");
-          navigate("/dashboard");
+          navigate("/dashboard", { replace: true });
           return;
         }
         
@@ -79,11 +83,11 @@ const Verification = () => {
         
         if (status === "verified") {
           toast.success("Your account is already verified!");
-          navigate("/dashboard");
+          navigate("/dashboard", { replace: true });
           return;
         } else if (status === "onboarding") {
           console.log("User is in onboarding status, redirecting to onboarding-status page");
-          navigate("/onboarding-status");
+          navigate("/onboarding-status", { replace: true });
           return;
         }
         
@@ -108,7 +112,7 @@ const Verification = () => {
               await dbService.set("v1/core/users", userId, { 
                 verificationStatus: "onboarding" 
               });
-              navigate("/onboarding-status");
+              navigate("/onboarding-status", { replace: true });
               return;
             }
             
@@ -153,8 +157,11 @@ const Verification = () => {
       }
     };
     
-    checkUser();
-  }, [userId, navigate, checkVerificationStatus, userRole, user]);
+    // Only run the check once when the component mounts and user/loading state is ready
+    if (!loading && !hasCheckedUser) {
+      checkUser();
+    }
+  }, [userId, navigate, checkVerificationStatus, userRole, user, loading, hasCheckedUser]);
   
   const handlePersonalInfoSave = async (data: PersonalInfo) => {
     try {

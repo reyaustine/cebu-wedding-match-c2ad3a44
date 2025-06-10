@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { 
   onAuthStateChange, 
   User, 
@@ -33,24 +34,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const hasRedirectedRef = useRef(false);
 
   // Handle redirects based on user verification status and role
   const handleUserRedirection = (user: User) => {
+    // Prevent multiple redirections
+    if (hasRedirectedRef.current) {
+      return;
+    }
+
     const verificationStatus = user.verificationStatus || "unverified";
     
     // Super admin and regular admin get direct access to dashboard
     if (user.role === "admin" || user.email === "reyaustine123@gmail.com") {
       console.log("Admin user detected, redirecting to dashboard");
+      hasRedirectedRef.current = true;
       navigate('/dashboard');
       return;
     }
     
     // Regular users follow verification flow
     if (verificationStatus === "unverified") {
+      hasRedirectedRef.current = true;
       navigate(`/verification/${user.id}`);
     } else if (verificationStatus === "onboarding") {
+      hasRedirectedRef.current = true;
       navigate('/onboarding-status');
     } else {
+      hasRedirectedRef.current = true;
       navigate('/dashboard');
     }
   };
@@ -60,6 +71,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Auth state changed:", user);
       setUser(user);
       setLoading(false);
+      
+      // Reset redirect flag when user changes
+      hasRedirectedRef.current = false;
       
       // Only handle auto-redirection on certain paths
       const currentPath = window.location.pathname;
@@ -75,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleLogin = async (email: string, password: string) => {
     setLoading(true);
+    hasRedirectedRef.current = false;
     try {
       const user = await loginUser(email, password);
       setUser(user);
@@ -109,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleGoogleSignIn = async (defaultRole: UserRole = "client") => {
     setLoading(true);
+    hasRedirectedRef.current = false;
     try {
       const user = await signInWithGoogle(defaultRole);
       setUser(user);
@@ -146,6 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     phone?: string
   ) => {
     setLoading(true);
+    hasRedirectedRef.current = false;
     try {
       const user = await registerUser(email, password, firstName, lastName, role, phone);
       setUser(user);
@@ -185,6 +202,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleLogout = async () => {
     try {
+      hasRedirectedRef.current = false;
       await logoutUser();
       setUser(null);
       navigate('/login');

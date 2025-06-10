@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, XCircle, CheckCircle2, Loader2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { storageService } from "@/services/storageService";
@@ -26,6 +26,24 @@ export const FileUpload = ({
   const [fileName, setFileName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Extract filename from existing URL and initialize states
+  useEffect(() => {
+    if (existingUrl) {
+      setFileUrl(existingUrl);
+      // Extract filename from URL
+      try {
+        const url = new URL(existingUrl);
+        const pathname = decodeURIComponent(url.pathname);
+        const filename = pathname.split('/').pop() || '';
+        // Remove the timestamp prefix if it exists (format: fileType_timestamp)
+        const cleanFilename = filename.replace(new RegExp(`^${fileType}_\\d+_?`), '');
+        setFileName(cleanFilename || `${fileType} file`);
+      } catch {
+        setFileName(`${fileType} file`);
+      }
+    }
+  }, [existingUrl, fileType]);
+  
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -49,7 +67,7 @@ export const FileUpload = ({
     
     try {
       // Upload to Firebase Storage
-      const path = `verification/${userId}/${fileType}_${Date.now()}`;
+      const path = `verification/${userId}/${fileType}_${Date.now()}_${file.name}`;
       
       console.log("Uploading file to path:", path);
       console.log("File type:", file.type);
@@ -132,63 +150,60 @@ export const FileUpload = ({
           )}
         </div>
       ) : (
-        <div className="border rounded-md overflow-hidden">
-          {/* Thumbnail preview section */}
-          {isImageFile(fileUrl) && (
-            <div className="relative">
-              <img 
-                src={fileUrl} 
-                alt="Uploaded file preview" 
-                className="w-full h-32 object-cover opacity-90"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-            </div>
-          )}
-          
-          {/* Success indicator and actions */}
-          <div className="p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-green-700 truncate">
-                    File uploaded successfully
-                  </p>
-                  {fileName && (
-                    <p className="text-xs text-gray-500 truncate mt-1">
-                      {fileName}
-                    </p>
-                  )}
-                </div>
-              </div>
+        <div className="border rounded-md p-3">
+          <div className="flex items-start justify-between gap-3">
+            {/* Thumbnail and file info */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
               
-              {/* Actions */}
-              <div className="flex items-center gap-1 flex-shrink-0">
-                {isImageFile(fileUrl) && (
-                  <Button 
-                    type="button"
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => window.open(fileUrl, '_blank')}
-                    className="text-gray-500 hover:text-gray-700 h-8 w-8 p-0"
-                    title="View full image"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
+              {/* Thumbnail preview for images */}
+              {isImageFile(fileUrl) && (
+                <div className="w-12 h-12 rounded border overflow-hidden flex-shrink-0">
+                  <img 
+                    src={fileUrl} 
+                    alt="Uploaded file preview" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-green-700 truncate">
+                  File uploaded successfully
+                </p>
+                {fileName && (
+                  <p className="text-xs text-gray-500 truncate mt-1">
+                    {fileName}
+                  </p>
                 )}
-                
+              </div>
+            </div>
+            
+            {/* Actions */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {isImageFile(fileUrl) && (
                 <Button 
                   type="button"
                   variant="ghost" 
-                  size="sm" 
-                  onClick={clearFile}
-                  className="text-destructive hover:text-destructive/90 h-8 w-8 p-0"
-                  title="Remove file"
+                  size="sm"
+                  onClick={() => window.open(fileUrl, '_blank')}
+                  className="text-gray-500 hover:text-gray-700 h-8 w-8 p-0"
+                  title="View full image"
                 >
-                  <XCircle className="h-4 w-4" />
+                  <Eye className="h-4 w-4" />
                 </Button>
-              </div>
+              )}
+              
+              <Button 
+                type="button"
+                variant="ghost" 
+                size="sm" 
+                onClick={clearFile}
+                className="text-destructive hover:text-destructive/90 h-8 w-8 p-0"
+                title="Remove file"
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>

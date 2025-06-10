@@ -8,8 +8,7 @@ import {
   ServiceInfo, 
   saveUserVerificationData, 
   submitVerificationForReview, 
-  UserRole,
-  getVerificationData
+  UserRole 
 } from "@/services/authService";
 import { PersonalInfoForm } from "@/components/verification/PersonalInfoForm";
 import { BusinessInfoForm } from "@/components/verification/BusinessInfoForm";
@@ -18,6 +17,7 @@ import { ReviewInfoForm } from "@/components/verification/ReviewInfoForm";
 import { VerificationContainer } from "@/components/verification/VerificationContainer";
 import { toast } from "sonner";
 import { dbService } from "@/services/databaseService";
+import { where } from "firebase/firestore";
 
 interface VerificationData {
   personalInfo?: PersonalInfo;
@@ -40,7 +40,7 @@ const Verification = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const initializeVerification = async () => {
+    const checkUser = async () => {
       if (!userId) {
         toast.error("User ID is required");
         navigate("/login");
@@ -48,24 +48,15 @@ const Verification = () => {
       }
       
       try {
-        console.log("Initializing verification for user:", userId);
-        
-        // First check if user exists in our database
         const userData = await dbService.get("users", userId);
         
         if (!userData) {
-          console.error("User not found in database:", userId);
-          toast.error("User not found. Please log in again.");
+          toast.error("User not found");
           navigate("/login");
           return;
         }
         
-        console.log("Found user data:", userData);
-        setUserRole((userData as { role: UserRole }).role);
-        
-        // Check verification status
         const status = await checkVerificationStatus(userId);
-        console.log("Verification status:", status);
         
         if (status === "verified") {
           toast.success("Your account is already verified!");
@@ -76,38 +67,44 @@ const Verification = () => {
           return;
         }
         
-        // Load existing verification data using the new function
+        setUserRole((userData as { role: UserRole }).role);
+        
+        // Load existing verification data
         try {
-          const verificationData = await getVerificationData(userId);
+          console.log("Loading existing verification data for user:", userId);
+          const verifications = await dbService.query<VerificationData>(
+            "userVerifications",
+            where("userId", "==", userId)
+          );
           
-          if (verificationData) {
-            console.log("Found existing verification data:", verificationData);
+          if (verifications && verifications.length > 0) {
+            const data = verifications[0];
+            console.log("Found existing verification data:", data);
             
-            if (verificationData.personalInfo) {
-              setPersonalInfo(verificationData.personalInfo);
-              console.log("Loaded personal info:", verificationData.personalInfo);
+            if (data.personalInfo) {
+              setPersonalInfo(data.personalInfo);
+              console.log("Loaded personal info:", data.personalInfo);
             }
-            if (verificationData.businessInfo) {
-              setBusinessInfo(verificationData.businessInfo);
-              console.log("Loaded business info:", verificationData.businessInfo);
+            if (data.businessInfo) {
+              setBusinessInfo(data.businessInfo);
+              console.log("Loaded business info:", data.businessInfo);
             }
-            if (verificationData.serviceInfo) {
-              setServiceInfo(verificationData.serviceInfo);
-              console.log("Loaded service info:", verificationData.serviceInfo);
+            if (data.serviceInfo) {
+              setServiceInfo(data.serviceInfo);
+              console.log("Loaded service info:", data.serviceInfo);
             }
             
             // Determine the current step based on completed data
-            const role = (userData as { role: UserRole }).role;
-            if (role === "client") {
-              if (verificationData.personalInfo) {
+            if (userRole === "client") {
+              if (data.personalInfo) {
                 setCurrentStep(2); // Go to review step
               }
             } else {
-              if (verificationData.serviceInfo) {
+              if (data.serviceInfo) {
                 setCurrentStep(4); // Go to review step
-              } else if (verificationData.businessInfo) {
+              } else if (data.businessInfo) {
                 setCurrentStep(3); // Go to service info step
-              } else if (verificationData.personalInfo) {
+              } else if (data.personalInfo) {
                 setCurrentStep(2); // Go to business info step
               }
             }
@@ -118,15 +115,15 @@ const Verification = () => {
           console.error("Error fetching verification data:", error);
         }
       } catch (error) {
-        console.error("Error initializing verification:", error);
-        toast.error("Error loading verification data");
+        console.error("Error checking user:", error);
+        toast.error("Error loading user data");
       } finally {
         setIsLoading(false);
       }
     };
     
-    initializeVerification();
-  }, [userId, navigate, checkVerificationStatus]);
+    checkUser();
+  }, [userId, navigate, checkVerificationStatus, userRole]);
   
   const handlePersonalInfoSave = async (data: PersonalInfo) => {
     try {

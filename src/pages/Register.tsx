@@ -81,16 +81,23 @@ const Register = () => {
         data.phone
       );
       
-      if (user) {
-        // Redirect to verification page
-        navigate(`/verification/${user.id}`);
+      // The auth context handles success messaging and navigation
+      // Only handle the case where registration returns null (error case)
+      if (!user) {
+        // Error was already handled in auth context, just stop loading
+        console.log("Registration failed - user is null");
       }
     } catch (error: any) {
-      console.error("Registration error:", error);
-      toast.error(error.message || "Failed to create account");
+      // This is a fallback in case the auth context doesn't catch the error
+      console.error("Registration error in component:", error);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleExistingAccountRedirect = () => {
+    navigate('/login');
   };
   
   return (
@@ -302,7 +309,7 @@ const Register = () => {
               <div className="text-center">
                 <p className="text-gray-600 text-sm">
                   Already have an account?{" "}
-                  <Link to="/login" className="text-wedding-600 font-medium">
+                  <Link to="/login" className="text-wedding-600 font-medium hover:underline">
                     Sign in
                   </Link>
                 </p>

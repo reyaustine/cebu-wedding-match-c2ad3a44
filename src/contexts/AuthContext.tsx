@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
   onAuthStateChange, 
@@ -14,6 +13,7 @@ import {
 } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { errorHandler } from '@/services/errorHandlingService';
 
 interface AuthContextType {
   user: User | null;
@@ -77,8 +77,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const user = await loginUser(email, password);
       setUser(user);
       handleUserRedirection(user);
-    } catch (error) {
+      toast.success("Successfully signed in!");
+    } catch (error: any) {
       console.error('Login error:', error);
+      let errorMessage = "Failed to sign in";
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = "No account found with this email address";
+          break;
+        case 'auth/wrong-password':
+          errorMessage = "Incorrect password";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "Please enter a valid email address";
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = "Too many failed attempts. Please try again later";
+          break;
+        default:
+          errorMessage = error.message || "Failed to sign in";
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -101,9 +122,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         navigate('/dashboard');
       }
       
+      toast.success("Successfully signed in with Google!");
       return user;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google sign-in error:', error);
+      if (error.code !== 'auth/cancelled-popup-request') {
+        toast.error(error.message || "Google sign-in failed");
+      }
       return null;
     } finally {
       setLoading(false);
@@ -123,11 +148,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const user = await registerUser(email, password, firstName, lastName, role, phone);
       setUser(user);
       
+      toast.success("Account created successfully! Please verify your account.");
       // Redirect to verification page for new users
       navigate(`/verification/${user.id}`);
       return user;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
+      
+      let errorMessage = "Failed to create account";
+      
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = "An account with this email already exists. Try signing in instead.";
+          break;
+        case 'auth/weak-password':
+          errorMessage = "Password is too weak. Please use at least 8 characters.";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "Please enter a valid email address.";
+          break;
+        case 'auth/operation-not-allowed':
+          errorMessage = "Email/password accounts are not enabled. Please contact support.";
+          break;
+        default:
+          errorMessage = error.message || "Failed to create account. Please try again.";
+      }
+      
+      toast.error(errorMessage);
       return null;
     } finally {
       setLoading(false);
@@ -194,3 +241,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+}

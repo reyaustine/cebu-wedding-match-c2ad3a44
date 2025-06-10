@@ -56,7 +56,8 @@ const Verification = () => {
           return;
         }
         
-        const userData = await dbService.get("users", userId);
+        // Use correct database path for users
+        const userData = await dbService.get("v1/core/users", userId);
         
         if (!userData) {
           toast.error("User not found");
@@ -88,11 +89,11 @@ const Verification = () => {
         
         setUserRole((userData as { role: UserRole }).role);
         
-        // Load existing verification data
+        // Load existing verification data using correct path
         try {
           console.log("Loading existing verification data for user:", userId);
           const verifications = await dbService.query<VerificationData>(
-            "userVerifications",
+            "v1/core/userVerifications",
             where("userId", "==", userId)
           );
           
@@ -104,7 +105,7 @@ const Verification = () => {
             if (data.status === "submitted" || data.status === "onboarding") {
               console.log("Verification already submitted, redirecting to onboarding status");
               // Update user status to onboarding if not already set
-              await dbService.set("users", userId, { 
+              await dbService.set("v1/core/users", userId, { 
                 verificationStatus: "onboarding" 
               });
               navigate("/onboarding-status");

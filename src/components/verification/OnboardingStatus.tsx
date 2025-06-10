@@ -17,6 +17,19 @@ export const OnboardingStatus = ({ userRole }: OnboardingStatusProps) => {
     await logout();
     navigate('/');
   };
+
+  const getRoleDisplayText = (role: string) => {
+    switch (role) {
+      case "supplier":
+        return "supplier";
+      case "planner":
+        return "wedding planner";
+      case "client":
+        return "client";
+      default:
+        return "account";
+    }
+  };
   
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -35,7 +48,7 @@ export const OnboardingStatus = ({ userRole }: OnboardingStatusProps) => {
         
         <div className="text-center space-y-4">
           <h3 className="text-lg font-medium">
-            Your {userRole === "supplier" ? "supplier" : "wedding planner"} account is being verified
+            Your {getRoleDisplayText(userRole)} account is being verified
           </h3>
           
           <p className="text-muted-foreground">
@@ -55,14 +68,18 @@ export const OnboardingStatus = ({ userRole }: OnboardingStatusProps) => {
             <CheckCircle className="h-5 w-5 text-green-500" />
             <span>Personal information received</span>
           </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            <span>Business information received</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            <span>Services information received</span>
-          </div>
+          {(userRole === "supplier" || userRole === "planner") && (
+            <>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span>Business information received</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span>Services information received</span>
+              </div>
+            </>
+          )}
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-amber-500" />
             <span>Verification in progress</span>

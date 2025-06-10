@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
@@ -70,7 +69,9 @@ const Verification = () => {
         
         setUserRole((userData as { role: UserRole }).role);
         
+        // Load existing verification data
         try {
+          console.log("Loading existing verification data for user:", userId);
           const verifications = await dbService.query<VerificationData>(
             "userVerifications",
             where("userId", "==", userId)
@@ -78,9 +79,37 @@ const Verification = () => {
           
           if (verifications && verifications.length > 0) {
             const data = verifications[0];
-            if (data.personalInfo) setPersonalInfo(data.personalInfo);
-            if (data.businessInfo) setBusinessInfo(data.businessInfo);
-            if (data.serviceInfo) setServiceInfo(data.serviceInfo);
+            console.log("Found existing verification data:", data);
+            
+            if (data.personalInfo) {
+              setPersonalInfo(data.personalInfo);
+              console.log("Loaded personal info:", data.personalInfo);
+            }
+            if (data.businessInfo) {
+              setBusinessInfo(data.businessInfo);
+              console.log("Loaded business info:", data.businessInfo);
+            }
+            if (data.serviceInfo) {
+              setServiceInfo(data.serviceInfo);
+              console.log("Loaded service info:", data.serviceInfo);
+            }
+            
+            // Determine the current step based on completed data
+            if (userRole === "client") {
+              if (data.personalInfo) {
+                setCurrentStep(2); // Go to review step
+              }
+            } else {
+              if (data.serviceInfo) {
+                setCurrentStep(4); // Go to review step
+              } else if (data.businessInfo) {
+                setCurrentStep(3); // Go to service info step
+              } else if (data.personalInfo) {
+                setCurrentStep(2); // Go to business info step
+              }
+            }
+          } else {
+            console.log("No existing verification data found");
           }
         } catch (error) {
           console.error("Error fetching verification data:", error);
@@ -94,7 +123,7 @@ const Verification = () => {
     };
     
     checkUser();
-  }, [userId, navigate, checkVerificationStatus]);
+  }, [userId, navigate, checkVerificationStatus, userRole]);
   
   const handlePersonalInfoSave = async (data: PersonalInfo) => {
     try {

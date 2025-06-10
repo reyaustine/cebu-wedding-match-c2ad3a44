@@ -96,7 +96,7 @@ export const updateUserPassword = async (currentPassword: string, newPassword: s
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
   return auth.onAuthStateChanged(async (firebaseUser) => {
     if (firebaseUser) {
-      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      const userDoc = await getDoc(doc(db, 'v1/core/users', firebaseUser.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data() as Omit<User, 'id'>;
         const user: User = {
@@ -125,7 +125,7 @@ export const onAuthStateChange = (callback: (user: User | null) => void) => {
 // Get user verification status
 export const getUserVerificationStatus = async (userId: string): Promise<string> => {
   try {
-    const userDocRef = doc(db, 'users', userId);
+    const userDocRef = doc(db, 'v1/core/users', userId);
     const userDocSnap = await getDoc(userDocRef);
     
     if (userDocSnap.exists()) {
@@ -149,7 +149,7 @@ export const signInWithGoogle = async (defaultRole: UserRole = "client"): Promis
     const user = result.user;
     
     // Check if user exists in database
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userDoc = await getDoc(doc(db, 'v1/core/users', user.uid));
     
     if (!userDoc.exists()) {
       // Create user document
@@ -162,7 +162,7 @@ export const signInWithGoogle = async (defaultRole: UserRole = "client"): Promis
         verificationStatus: 'unverified',
         createdAt: new Date(),
       };
-      await setDoc(doc(db, 'users', user.uid), newUser);
+      await setDoc(doc(db, 'v1/core/users', user.uid), newUser);
       
       return {
         id: user.uid,
@@ -205,7 +205,7 @@ const createUserDocument = async (user: any, firstName: string, lastName: string
     verificationStatus: 'unverified',
     createdAt: new Date(),
   };
-  await setDoc(doc(db, 'users', user.uid), newUser);
+  await setDoc(doc(db, 'v1/core/users', user.uid), newUser);
   return newUser;
 };
 
@@ -245,7 +245,7 @@ export const loginUser = async (email: string, password: string): Promise<User> 
     const user = userCredential.user;
     
     // Get user document from Firestore
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userDoc = await getDoc(doc(db, 'v1/core/users', user.uid));
     
     if (userDoc.exists()) {
       const userData = userDoc.data() as Omit<User, 'id'>;
@@ -286,6 +286,32 @@ export const resetPassword = async (email: string) => {
     await sendPasswordResetEmail(auth, email);
   } catch (error) {
     console.error("Password reset error:", error);
+    throw error;
+  }
+};
+
+// Get existing verification data by userId
+export const getVerificationData = async (userId: string) => {
+  try {
+    console.log("Getting verification data for user:", userId);
+    
+    const verificationsRef = collection(db, 'v1/core/userVerifications');
+    const q = query(verificationsRef, where("userId", "==", userId));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      const data = querySnapshot.docs[0].data();
+      console.log("Found verification data:", data);
+      return {
+        id: querySnapshot.docs[0].id,
+        ...data
+      };
+    }
+    
+    console.log("No verification data found");
+    return null;
+  } catch (error) {
+    console.error('Error getting verification data:', error);
     throw error;
   }
 };

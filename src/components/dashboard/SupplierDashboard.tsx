@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Package, MessageSquare, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,6 @@ import { useState, useEffect } from "react";
 import { dbService } from "@/services/databaseService";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { where, collection, doc, getDoc } from "firebase/firestore";
 import { Booking, ServicePackage } from "@/types/supplier";
 
 interface Conversation {
@@ -51,19 +49,19 @@ export const SupplierDashboard = () => {
         
         // Fetch pending bookings count
         const bookings = await dbService.query<Booking>('bookings', 
-          where('supplierId', '==', user.id),
-          where('status', '==', 'pending')
+          { field: 'supplierId', operator: '==', value: user.id },
+          { field: 'status', operator: '==', value: 'pending' }
         );
         
         // Fetch active packages count
         const packages = await dbService.query<ServicePackage>('servicePackages', 
-          where('supplierId', '==', user.id),
-          where('isActive', '==', true)
+          { field: 'supplierId', operator: '==', value: user.id },
+          { field: 'isActive', operator: '==', value: true }
         );
 
         // Get unread messages
         const conversations = await dbService.query<Conversation>('conversations', 
-          where('participants', 'array-contains', user.id)
+          { field: 'participants', operator: 'array-contains', value: user.id }
         );
         
         let unreadCount = 0;
@@ -77,8 +75,8 @@ export const SupplierDashboard = () => {
           try {
             const messages = await dbService.query<Message>(
               `conversations/${convoId}/messages`,
-              where('senderId', '!=', user.id),
-              where('read', '==', false)
+              { field: 'senderId', operator: '!=', value: user.id },
+              { field: 'read', operator: '==', value: false }
             );
             unreadCount += messages.length;
           } catch (messageError) {
@@ -89,9 +87,9 @@ export const SupplierDashboard = () => {
         
         // Calculate monthly revenue (simplified for demo)
         const completedBookings = await dbService.query<Booking>('bookings',
-          where('supplierId', '==', user.id),
-          where('status', '==', 'completed'),
-          where('completedAt', '>=', new Date(new Date().setDate(1))) // From 1st day of current month
+          { field: 'supplierId', operator: '==', value: user.id },
+          { field: 'status', operator: '==', value: 'completed' },
+          { field: 'completedAt', operator: '>=', value: new Date(new Date().setDate(1)) } // From 1st day of current month
         );
         
         const monthlyRevenue = completedBookings.reduce((total, booking) => {

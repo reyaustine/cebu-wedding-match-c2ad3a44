@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -59,7 +58,7 @@ export const AdminDashboard = () => {
         
         // Fetch pending verification requests
         const verifications = await dbService.query<VerificationRequest>("userVerifications", 
-          where("status", "==", "pending")
+          { field: "status", operator: "==", value: "pending" }
         );
         
         const pendingVerifications = verifications.length;

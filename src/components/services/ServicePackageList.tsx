@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { dbService } from "@/services/databaseService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +21,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { where } from "firebase/firestore";
 import { Timestamp } from "firebase/firestore";
 import { errorHandler } from "@/services/errorHandlingService";
 
@@ -41,7 +41,7 @@ export const ServicePackageList = () => {
         
         const packagesData = await dbService.query<ServicePackage>(
           'servicePackages',
-          where('supplierId', '==', user.id)
+          { field: 'supplierId', operator: '==', value: user.id }
         );
         
         // Convert timestamps to Date objects

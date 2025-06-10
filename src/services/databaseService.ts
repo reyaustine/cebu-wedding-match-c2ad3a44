@@ -163,16 +163,20 @@ export const dbService = {
   },
 
   /**
-   * Query documents in a collection
+   * Query documents in a collection with proper where conditions
    */
-  query: async <T extends DocumentData>
-    (collectionPath: string, ...queryConstraints: QueryConstraint[]): Promise<T[]> => {
+  query: async <T extends DocumentData>(
+    collectionPath: string, 
+    ...conditions: Array<{ field: string; operator: WhereFilterOp; value: any }>
+  ): Promise<T[]> => {
     try {
       const collectionRef = collection(db, collectionPath);
+      const queryConstraints = conditions.map(condition => 
+        where(condition.field, condition.operator, condition.value)
+      );
       const q = query(collectionRef, ...queryConstraints);
       const querySnapshot = await getDocs(q);
       
-      // Fix the type conversion issue by using a proper type assertion
       return querySnapshot.docs.map(doc => ({
         ...(doc.data() as T),
         id: doc.id

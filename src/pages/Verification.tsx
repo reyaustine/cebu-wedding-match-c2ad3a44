@@ -8,6 +8,7 @@ import {
   ServiceInfo, 
   saveUserVerificationData, 
   submitVerificationForReview, 
+  getUserVerificationData,
   UserRole 
 } from "@/services/authService";
 import { PersonalInfoForm } from "@/components/verification/PersonalInfoForm";
@@ -17,9 +18,9 @@ import { ReviewInfoForm } from "@/components/verification/ReviewInfoForm";
 import { VerificationContainer } from "@/components/verification/VerificationContainer";
 import { toast } from "sonner";
 import { dbService } from "@/services/databaseService";
-import { where } from "firebase/firestore";
 
 interface VerificationData {
+  id?: string;
   personalInfo?: PersonalInfo;
   businessInfo?: BusinessInfo;
   serviceInfo?: ServiceInfo;
@@ -48,7 +49,7 @@ const Verification = () => {
       }
       
       try {
-        const userData = await dbService.get("users", userId);
+        const userData = await dbService.get("v1/core/users", userId);
         
         if (!userData) {
           toast.error("User not found");
@@ -72,39 +73,35 @@ const Verification = () => {
         // Load existing verification data
         try {
           console.log("Loading existing verification data for user:", userId);
-          const verifications = await dbService.query<VerificationData>(
-            "userVerifications",
-            where("userId", "==", userId)
-          );
+          const verificationData = await getUserVerificationData(userId);
           
-          if (verifications && verifications.length > 0) {
-            const data = verifications[0];
-            console.log("Found existing verification data:", data);
+          if (verificationData) {
+            console.log("Found existing verification data:", verificationData);
             
-            if (data.personalInfo) {
-              setPersonalInfo(data.personalInfo);
-              console.log("Loaded personal info:", data.personalInfo);
+            if (verificationData.personalInfo) {
+              setPersonalInfo(verificationData.personalInfo);
+              console.log("Loaded personal info:", verificationData.personalInfo);
             }
-            if (data.businessInfo) {
-              setBusinessInfo(data.businessInfo);
-              console.log("Loaded business info:", data.businessInfo);
+            if (verificationData.businessInfo) {
+              setBusinessInfo(verificationData.businessInfo);
+              console.log("Loaded business info:", verificationData.businessInfo);
             }
-            if (data.serviceInfo) {
-              setServiceInfo(data.serviceInfo);
-              console.log("Loaded service info:", data.serviceInfo);
+            if (verificationData.serviceInfo) {
+              setServiceInfo(verificationData.serviceInfo);
+              console.log("Loaded service info:", verificationData.serviceInfo);
             }
             
             // Determine the current step based on completed data
             if (userRole === "client") {
-              if (data.personalInfo) {
+              if (verificationData.personalInfo) {
                 setCurrentStep(2); // Go to review step
               }
             } else {
-              if (data.serviceInfo) {
+              if (verificationData.serviceInfo) {
                 setCurrentStep(4); // Go to review step
-              } else if (data.businessInfo) {
+              } else if (verificationData.businessInfo) {
                 setCurrentStep(3); // Go to service info step
-              } else if (data.personalInfo) {
+              } else if (verificationData.personalInfo) {
                 setCurrentStep(2); // Go to business info step
               }
             }

@@ -1,4 +1,3 @@
-
 import { db } from "@/config/firebase";
 import {
   collection,
@@ -57,7 +56,9 @@ export const dbService = {
    */
   add: async <T extends DocumentData>(collectionName: string, data: T): Promise<string> => {
     try {
-      const collectionRef = collection(db, collectionName);
+      // Handle v1/core path structure
+      const collectionPath = collectionName.startsWith('v1/core/') ? collectionName : `v1/core/${collectionName}`;
+      const collectionRef = collection(db, collectionPath);
       const docRef = await addDoc(collectionRef, {
         ...data,
         createdAt: data.createdAt || new Date(),
@@ -84,7 +85,9 @@ export const dbService = {
    */
   set: async <T extends DocumentData>(collectionName: string, id: string, data: T): Promise<void> => {
     try {
-      const docRef = doc(db, collectionName, id);
+      // Handle v1/core path structure
+      const collectionPath = collectionName.startsWith('v1/core/') ? collectionName : `v1/core/${collectionName}`;
+      const docRef = doc(db, collectionPath, id);
       await setDoc(docRef, {
         ...data,
         updatedAt: data.updatedAt || new Date()
@@ -102,7 +105,9 @@ export const dbService = {
    */
   get: async <T extends DocumentData>(collectionName: string, id: string): Promise<T | null> => {
     try {
-      const docRef = doc(db, collectionName, id);
+      // Handle v1/core path structure
+      const collectionPath = collectionName.startsWith('v1/core/') ? collectionName : `v1/core/${collectionName}`;
+      const docRef = doc(db, collectionPath, id);
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
@@ -134,7 +139,9 @@ export const dbService = {
    */
   update: async <T extends DocumentData>(collectionName: string, id: string, data: Partial<T>): Promise<void> => {
     try {
-      const docRef = doc(db, collectionName, id);
+      // Handle v1/core path structure
+      const collectionPath = collectionName.startsWith('v1/core/') ? collectionName : `v1/core/${collectionName}`;
+      const docRef = doc(db, collectionPath, id);
       await updateDoc(docRef, {
         ...data,
         updatedAt: new Date()
@@ -152,7 +159,9 @@ export const dbService = {
    */
   delete: async (collectionName: string, id: string): Promise<void> => {
     try {
-      const docRef = doc(db, collectionName, id);
+      // Handle v1/core path structure
+      const collectionPath = collectionName.startsWith('v1/core/') ? collectionName : `v1/core/${collectionName}`;
+      const docRef = doc(db, collectionPath, id);
       await deleteDoc(docRef);
     } catch (error) {
       errorHandler.handle(error, { 
@@ -168,7 +177,9 @@ export const dbService = {
   query: async <T extends DocumentData>
     (collectionPath: string, ...queryConstraints: QueryConstraint[]): Promise<T[]> => {
     try {
-      const collectionRef = collection(db, collectionPath);
+      // Handle v1/core path structure
+      const finalPath = collectionPath.startsWith('v1/core/') ? collectionPath : `v1/core/${collectionPath}`;
+      const collectionRef = collection(db, finalPath);
       const q = query(collectionRef, ...queryConstraints);
       const querySnapshot = await getDocs(q);
       
@@ -190,7 +201,9 @@ export const dbService = {
    */
   getAll: async <T extends DocumentData>(collectionName: string): Promise<T[]> => {
     try {
-      const collectionRef = collection(db, collectionName);
+      // Handle v1/core path structure
+      const collectionPath = collectionName.startsWith('v1/core/') ? collectionName : `v1/core/${collectionName}`;
+      const collectionRef = collection(db, collectionPath);
       const querySnapshot = await getDocs(collectionRef);
       
       // Fix the type conversion issue by using a proper type assertion
@@ -211,7 +224,9 @@ export const dbService = {
    */
   exists: async (collectionName: string, id: string): Promise<boolean> => {
     try {
-      const docRef = doc(db, collectionName, id);
+      // Handle v1/core path structure
+      const collectionPath = collectionName.startsWith('v1/core/') ? collectionName : `v1/core/${collectionName}`;
+      const docRef = doc(db, collectionPath, id);
       const docSnap = await getDoc(docRef);
       return docSnap.exists();
     } catch (error) {
@@ -227,14 +242,18 @@ export const dbService = {
    * Get collection reference
    */
   getCollectionRef: (collectionName: string) => {
-    return collection(db, collectionName);
+    // Handle v1/core path structure
+    const collectionPath = collectionName.startsWith('v1/core/') ? collectionName : `v1/core/${collectionName}`;
+    return collection(db, collectionPath);
   },
 
   /**
    * Get document reference
    */
   getDocRef: (collectionName: string, id: string) => {
-    return doc(db, collectionName, id);
+    // Handle v1/core path structure
+    const collectionPath = collectionName.startsWith('v1/core/') ? collectionName : `v1/core/${collectionName}`;
+    return doc(db, collectionPath, id);
   },
 
   /**

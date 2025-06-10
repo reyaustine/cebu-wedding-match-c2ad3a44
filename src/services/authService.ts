@@ -11,7 +11,7 @@ import {
   updatePassword
 } from "firebase/auth";
 import { auth, db } from "@/config/firebase";
-import { collection, doc, getDoc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, doc, getDoc, setDoc, serverTimestamp, Timestamp, query, where, getDocs } from "firebase/firestore";
 
 export type UserRole = 'client' | 'supplier' | 'planner' | 'admin';
 
@@ -297,38 +297,43 @@ export const saveUserVerificationData = async (
   data: PersonalInfo | BusinessInfo | ServiceInfo
 ) => {
   try {
-    const userVerificationRef = doc(collection(db, 'userVerifications'));
+    console.log(`Saving ${dataType} for user:`, userId, data);
     
-    // Check if user already has verification data
-    const userVerifications = await collection(db, 'userVerifications');
-    const userVerificationQuery = await userVerifications;
-    const existingDocs = await userVerificationQuery;
+    // Query existing verification data using the correct collection path
+    const verificationsRef = collection(db, 'v1/core/userVerifications');
+    const q = query(verificationsRef, where("userId", "==", userId));
+    const querySnapshot = await getDocs(q);
     
-    // If user has existing verification data, update it
-    if (existingDocs) {
-      await setDoc(
-        userVerificationRef, 
-        { 
-          userId, 
-          [dataType]: data, 
-          updatedAt: new Date(),
-          status: 'draft'
-        },
-        { merge: true }
-      );
+    let docRef;
+    let existingData = {};
+    
+    if (!querySnapshot.empty) {
+      // Update existing document
+      docRef = querySnapshot.docs[0].ref;
+      existingData = querySnapshot.docs[0].data();
+      console.log("Found existing verification data, updating...");
     } else {
-      // Create new verification data
-      await setDoc(
-        userVerificationRef,
-        {
-          userId,
-          [dataType]: data,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          status: 'draft'
-        }
-      );
+      // Create new document
+      docRef = doc(collection(db, 'v1/core/userVerifications'));
+      console.log("Creating new verification document...");
     }
+    
+    // Merge new data with existing data
+    const updatedData = {
+      ...existingData,
+      userId,
+      [dataType]: data,
+      updatedAt: new Date(),
+      status: 'draft'
+    };
+    
+    // Add createdAt only for new documents
+    if (querySnapshot.empty) {
+      updatedData.createdAt = new Date();
+    }
+    
+    await setDoc(docRef, updatedData);
+    console.log(`Successfully saved ${dataType} to Firestore`);
     
     return true;
   } catch (error) {
@@ -340,27 +345,31 @@ export const saveUserVerificationData = async (
 // Submit verification for review
 export const submitVerificationForReview = async (userId: string, userRole: UserRole) => {
   try {
+    console.log("Submitting verification for review:", userId);
+    
     // Update user verification status to 'onboarding'
     await setDoc(
-      doc(db, 'users', userId),
+      doc(db, 'v1/core/users', userId),
       { verificationStatus: 'onboarding' },
       { merge: true }
     );
     
     // Update verification data status to 'submitted'
-    const userVerifications = await collection(db, 'userVerifications');
-    const userVerificationQuery = await userVerifications;
-    const existingDocs = await userVerificationQuery;
+    const verificationsRef = collection(db, 'v1/core/userVerifications');
+    const q = query(verificationsRef, where("userId", "==", userId));
+    const querySnapshot = await getDocs(q);
     
-    if (existingDocs) {
+    if (!querySnapshot.empty) {
+      const docRef = querySnapshot.docs[0].ref;
       await setDoc(
-        doc(db, 'userVerifications', existingDocs.id),
+        docRef,
         {
           status: 'submitted',
           submittedAt: new Date()
         },
         { merge: true }
       );
+      console.log("Verification status updated to submitted");
     }
     
     return true;

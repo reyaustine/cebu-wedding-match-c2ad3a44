@@ -48,7 +48,8 @@ const Verification = () => {
       }
       
       try {
-        const userData = await dbService.get("users", userId);
+        // First get user data from the correct path
+        const userData = await dbService.get("v1/core/users", userId);
         
         if (!userData) {
           toast.error("User not found");
@@ -69,11 +70,11 @@ const Verification = () => {
         
         setUserRole((userData as { role: UserRole }).role);
         
-        // Load existing verification data
+        // Load existing verification data from the correct path
         try {
           console.log("Loading existing verification data for user:", userId);
           const verifications = await dbService.query<VerificationData>(
-            "userVerifications",
+            "v1/core/userVerifications",
             where("userId", "==", userId)
           );
           
@@ -95,7 +96,8 @@ const Verification = () => {
             }
             
             // Determine the current step based on completed data
-            if (userRole === "client") {
+            const role = (userData as { role: UserRole }).role;
+            if (role === "client") {
               if (data.personalInfo) {
                 setCurrentStep(2); // Go to review step
               }
@@ -123,7 +125,7 @@ const Verification = () => {
     };
     
     checkUser();
-  }, [userId, navigate, checkVerificationStatus, userRole]);
+  }, [userId, navigate, checkVerificationStatus]);
   
   const handlePersonalInfoSave = async (data: PersonalInfo) => {
     try {

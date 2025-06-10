@@ -95,7 +95,7 @@ export const updateUserPassword = async (currentPassword: string, newPassword: s
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
   return auth.onAuthStateChanged(async (firebaseUser) => {
     if (firebaseUser) {
-      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      const userDoc = await getDoc(doc(db, 'v1/core/users', firebaseUser.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data() as Omit<User, 'id'>;
         const user: User = {
@@ -124,7 +124,7 @@ export const onAuthStateChange = (callback: (user: User | null) => void) => {
 // Get user verification status
 export const getUserVerificationStatus = async (userId: string): Promise<string> => {
   try {
-    const userDocRef = doc(db, 'users', userId);
+    const userDocRef = doc(db, 'v1/core/users', userId);
     const userDocSnap = await getDoc(userDocRef);
     
     if (userDocSnap.exists()) {
@@ -148,7 +148,7 @@ export const signInWithGoogle = async (defaultRole: UserRole = "client"): Promis
     const user = result.user;
     
     // Check if user exists in database
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userDoc = await getDoc(doc(db, 'v1/core/users', user.uid));
     
     if (!userDoc.exists()) {
       // Create user document
@@ -161,7 +161,7 @@ export const signInWithGoogle = async (defaultRole: UserRole = "client"): Promis
         verificationStatus: 'unverified',
         createdAt: new Date(),
       };
-      await setDoc(doc(db, 'users', user.uid), newUser);
+      await setDoc(doc(db, 'v1/core/users', user.uid), newUser);
       
       return {
         id: user.uid,
@@ -204,7 +204,7 @@ const createUserDocument = async (user: any, firstName: string, lastName: string
     verificationStatus: 'unverified',
     createdAt: new Date(),
   };
-  await setDoc(doc(db, 'users', user.uid), newUser);
+  await setDoc(doc(db, 'v1/core/users', user.uid), newUser);
   return newUser;
 };
 
@@ -244,7 +244,7 @@ export const loginUser = async (email: string, password: string): Promise<User> 
     const user = userCredential.user;
     
     // Get user document from Firestore
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userDoc = await getDoc(doc(db, 'v1/core/users', user.uid));
     
     if (userDoc.exists()) {
       const userData = userDoc.data() as Omit<User, 'id'>;
@@ -298,7 +298,7 @@ export const saveUserVerificationData = async (
   try {
     // Check if user already has verification data
     const verificationQuery = query(
-      collection(db, 'userVerifications'),
+      collection(db, 'v1/core/userVerifications'),
       where('userId', '==', userId)
     );
     const existingDocs = await getDocs(verificationQuery);
@@ -306,7 +306,7 @@ export const saveUserVerificationData = async (
     if (!existingDocs.empty) {
       // Update existing verification data
       const docId = existingDocs.docs[0].id;
-      const docRef = doc(db, 'userVerifications', docId);
+      const docRef = doc(db, 'v1/core/userVerifications', docId);
       await setDoc(
         docRef, 
         { 
@@ -318,7 +318,7 @@ export const saveUserVerificationData = async (
       );
     } else {
       // Create new verification data
-      const userVerificationRef = doc(collection(db, 'userVerifications'));
+      const userVerificationRef = doc(collection(db, 'v1/core/userVerifications'));
       await setDoc(
         userVerificationRef,
         {
@@ -343,21 +343,21 @@ export const submitVerificationForReview = async (userId: string, userRole: User
   try {
     // Update user verification status to 'onboarding'
     await setDoc(
-      doc(db, 'users', userId),
+      doc(db, 'v1/core/users', userId),
       { verificationStatus: 'onboarding' },
       { merge: true }
     );
     
     // Update verification data status to 'submitted'
     const verificationQuery = query(
-      collection(db, 'userVerifications'),
+      collection(db, 'v1/core/userVerifications'),
       where('userId', '==', userId)
     );
     const existingDocs = await getDocs(verificationQuery);
     
     if (!existingDocs.empty) {
       const docId = existingDocs.docs[0].id;
-      const docRef = doc(db, 'userVerifications', docId);
+      const docRef = doc(db, 'v1/core/userVerifications', docId);
       await setDoc(
         docRef,
         {

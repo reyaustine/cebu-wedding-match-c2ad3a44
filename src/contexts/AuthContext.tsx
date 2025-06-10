@@ -34,10 +34,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Handle redirects based on user verification status
+  // Handle redirects based on user verification status and role
   const handleUserRedirection = (user: User) => {
     const verificationStatus = user.verificationStatus || "unverified";
     
+    // Super admin and regular admin get direct access to dashboard
+    if (user.role === "admin" || user.email === "reyaustine123@gmail.com") {
+      console.log("Admin user detected, redirecting to dashboard");
+      navigate('/dashboard');
+      return;
+    }
+    
+    // Regular users follow verification flow
     if (verificationStatus === "unverified") {
       navigate(`/verification/${user.id}`);
     } else if (verificationStatus === "onboarding") {
@@ -49,22 +57,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChange((user) => {
+      console.log("Auth state changed:", user);
       setUser(user);
       setLoading(false);
       
-      // If user exists, check where they should be redirected
-      if (user && window.location.pathname !== `/verification/${user.id}` && 
-          window.location.pathname !== '/onboarding-status' && 
-          window.location.pathname !== '/dashboard') {
-        const verificationStatus = user.verificationStatus || "unverified";
-        
-        if (verificationStatus === "unverified") {
-          navigate(`/verification/${user.id}`);
-        } else if (verificationStatus === "onboarding") {
-          navigate('/onboarding-status');
-        } else if (verificationStatus === "verified") {
-          navigate('/dashboard');
-        }
+      // Only handle auto-redirection on certain paths
+      const currentPath = window.location.pathname;
+      const autoRedirectPaths = ['/login', '/register', '/'];
+      
+      if (user && autoRedirectPaths.includes(currentPath)) {
+        handleUserRedirection(user);
       }
     });
 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
 import { SupplierDashboard } from "@/components/dashboard/SupplierDashboard";
@@ -18,7 +19,16 @@ const Dashboard = () => {
   useEffect(() => {
     if (loading) return;
     
-    if (user) {
+    if (!user) {
+      toast.error("Please log in to access the dashboard");
+      navigate("/login");
+      return;
+    }
+
+    // Admin users bypass verification checks
+    const isAdmin = user.role === "admin" || user.email === "reyaustine123@gmail.com";
+    
+    if (!isAdmin) {
       const status = user.verificationStatus;
       if (status === "unverified") {
         navigate(`/verification/${user.id}`);
@@ -27,10 +37,9 @@ const Dashboard = () => {
         navigate("/onboarding-status");
         return;
       }
-    } else {
-      toast.error("Please log in to access the dashboard");
-      navigate("/login");
     }
+    
+    console.log("Dashboard loaded for user:", user.email, "Role:", user.role);
   }, [user, loading, navigate]);
 
   const handleRefresh = async () => {
@@ -51,6 +60,7 @@ const Dashboard = () => {
   if (!user) return null;
 
   const renderDashboardContent = () => {
+    console.log("Rendering dashboard for role:", user.role);
     switch (user.role) {
       case "client":
         return <ClientDashboard />;
@@ -61,7 +71,8 @@ const Dashboard = () => {
       case "admin":
         return <AdminDashboard />;
       default:
-        return <div>Invalid role</div>;
+        console.warn("Unknown role:", user.role);
+        return <div>Invalid role: {user.role}</div>;
     }
   };
 

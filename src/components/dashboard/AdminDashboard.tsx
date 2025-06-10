@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,24 +51,27 @@ export const AdminDashboard = () => {
     const fetchAdminData = async () => {
       try {
         setIsLoading(true);
+        console.log("Fetching admin dashboard data...");
         
-        // Fetch users
-        const users = await dbService.getAll("users");
+        // Fetch users from correct path
+        const users = await dbService.getAll("v1/core/users");
         const totalUsers = users.length;
+        console.log("Total users found:", totalUsers);
         
-        // Fetch pending verification requests
-        const verifications = await dbService.query<VerificationRequest>("userVerifications", 
-          where("status", "==", "pending")
+        // Fetch pending verification requests from correct path
+        const verifications = await dbService.query<VerificationRequest>("v1/core/userVerifications", 
+          where("status", "==", "submitted")
         );
         
         const pendingVerifications = verifications.length;
+        console.log("Pending verifications found:", pendingVerifications);
         
         // Enrich verification data with user details
         const enrichedVerifications: VerificationRequest[] = [];
         
         for (const verification of verifications) {
           try {
-            const userData = await dbService.getById<UserData>("users", verification.userId);
+            const userData = await dbService.getById<UserData>("v1/core/users", verification.userId);
             if (userData) {
               enrichedVerifications.push({
                 ...verification,
@@ -86,9 +88,10 @@ export const AdminDashboard = () => {
           }
         }
         
-        // Fetch bookings
-        const bookings = await dbService.getAll("bookings");
+        // Fetch bookings from correct path
+        const bookings = await dbService.getAll("v1/core/bookings");
         const totalBookings = bookings.length;
+        console.log("Total bookings found:", totalBookings);
         
         // Set dashboard stats
         setStats([
@@ -116,6 +119,7 @@ export const AdminDashboard = () => {
         ]);
         
         setVerificationRequests(enrichedVerifications);
+        console.log("Admin dashboard data loaded successfully");
       } catch (error) {
         console.error("Error fetching admin data:", error);
         toast.error("Failed to load admin dashboard data");
@@ -154,20 +158,30 @@ export const AdminDashboard = () => {
   
   const handleApproveVerification = async (id: string, userId: string) => {
     try {
-      // In a real app, we would update the verification status in Firestore
-      await dbService.update("userVerifications", id, { status: "approved" });
+      console.log("Approving verification for user:", userId);
+      // Update verification status using correct path
+      await dbService.update("v1/core/userVerifications", id, { 
+        status: "approved",
+        approvedAt: new Date(),
+        approvedBy: "admin"
+      });
       
-      // Also update the user's verification status
-      await dbService.update("users", userId, { verificationStatus: "verified" });
+      // Also update the user's verification status using correct path
+      await dbService.update("v1/core/users", userId, { 
+        verificationStatus: "verified" 
+      });
       
       toast.success("Verification approved successfully");
       
-      // Refetch verification requests
-      const updatedVerifications = verificationRequests.map(req => 
-        req.id === id ? { ...req, status: "approved" as const } : req
-      );
+      // Remove from pending list
+      setVerificationRequests(prev => prev.filter(req => req.id !== id));
       
-      setVerificationRequests(updatedVerifications);
+      // Update stats
+      setStats(prev => prev.map(stat => 
+        stat.title === "Pending Verifications" 
+          ? { ...stat, value: (stat.value as number) - 1 }
+          : stat
+      ));
     } catch (error) {
       console.error("Error approving verification:", error);
       toast.error("Failed to approve verification");
@@ -176,20 +190,30 @@ export const AdminDashboard = () => {
   
   const handleRejectVerification = async (id: string, userId: string) => {
     try {
-      // In a real app, we would update the verification status in Firestore
-      await dbService.update("userVerifications", id, { status: "rejected" });
+      console.log("Rejecting verification for user:", userId);
+      // Update verification status using correct path
+      await dbService.update("v1/core/userVerifications", id, { 
+        status: "rejected",
+        rejectedAt: new Date(),
+        rejectedBy: "admin"
+      });
       
-      // Also update the user's verification status
-      await dbService.update("users", userId, { verificationStatus: "rejected" });
+      // Also update the user's verification status using correct path
+      await dbService.update("v1/core/users", userId, { 
+        verificationStatus: "unverified" 
+      });
       
       toast.success("Verification rejected successfully");
       
-      // Refetch verification requests
-      const updatedVerifications = verificationRequests.map(req => 
-        req.id === id ? { ...req, status: "rejected" as const } : req
-      );
+      // Remove from pending list
+      setVerificationRequests(prev => prev.filter(req => req.id !== id));
       
-      setVerificationRequests(updatedVerifications);
+      // Update stats
+      setStats(prev => prev.map(stat => 
+        stat.title === "Pending Verifications" 
+          ? { ...stat, value: (stat.value as number) - 1 }
+          : stat
+      ));
     } catch (error) {
       console.error("Error rejecting verification:", error);
       toast.error("Failed to reject verification");
@@ -241,7 +265,7 @@ export const AdminDashboard = () => {
             <p className="text-sm text-gray-500">Review and manage verification requests from suppliers and planners</p>
           </div>
           <TabsList>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="pending">Pending ({verificationRequests.length})</TabsTrigger>
             <TabsTrigger value="approved">Approved</TabsTrigger>
             <TabsTrigger value="rejected">Rejected</TabsTrigger>
           </TabsList>
@@ -256,7 +280,7 @@ export const AdminDashboard = () => {
             </div>
           ) : verificationRequests.length > 0 ? (
             <div className="space-y-4">
-              {verificationRequests.filter(req => req.status === "pending").map((request) => (
+              {verificationRequests.map((request) => (
                 <Card key={request.id}>
                   <CardHeader className="pb-2">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -316,107 +340,23 @@ export const AdminDashboard = () => {
         </TabsContent>
         
         <TabsContent value="approved">
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array(2).fill(0).map((_, i) => (
-                <div key={i} className="h-28 bg-gray-100 rounded-lg animate-pulse" />
-              ))}
-            </div>
-          ) : verificationRequests.filter(req => req.status === "approved").length > 0 ? (
-            <div className="space-y-4">
-              {verificationRequests.filter(req => req.status === "approved").map((request) => (
-                <Card key={request.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <CardTitle className="text-lg">{request.businessName || "Unknown Business"}</CardTitle>
-                      <Badge variant="outline" className="bg-green-100 text-green-800 self-start sm:self-auto">
-                        Approved
-                      </Badge>
-                    </div>
-                    <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      <span>{request.userName || "Unknown User"}</span>
-                      {request.userEmail && (
-                        <span className="text-xs">{request.userEmail}</span>
-                      )}
-                      {request.category && (
-                        <Badge variant="outline" className="self-start sm:self-auto">
-                          {request.category}
-                        </Badge>
-                      )}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardFooter className="pt-2">
-                    <Button 
-                      variant="outline"
-                      className="flex items-center gap-2 ml-auto"
-                    >
-                      View Details
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <FileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium mb-1">No approved verification requests</h3>
-                <p className="text-gray-500">No verification requests have been approved yet</p>
-              </CardContent>
-            </Card>
-          )}
+          <Card>
+            <CardContent className="p-6 text-center">
+              <FileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+              <h3 className="text-lg font-medium mb-1">Approved verifications</h3>
+              <p className="text-gray-500">This section will show approved verification requests</p>
+            </CardContent>
+          </Card>
         </TabsContent>
         
         <TabsContent value="rejected">
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array(2).fill(0).map((_, i) => (
-                <div key={i} className="h-28 bg-gray-100 rounded-lg animate-pulse" />
-              ))}
-            </div>
-          ) : verificationRequests.filter(req => req.status === "rejected").length > 0 ? (
-            <div className="space-y-4">
-              {verificationRequests.filter(req => req.status === "rejected").map((request) => (
-                <Card key={request.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <CardTitle className="text-lg">{request.businessName || "Unknown Business"}</CardTitle>
-                      <Badge variant="outline" className="bg-red-100 text-red-800 self-start sm:self-auto">
-                        Rejected
-                      </Badge>
-                    </div>
-                    <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      <span>{request.userName || "Unknown User"}</span>
-                      {request.userEmail && (
-                        <span className="text-xs">{request.userEmail}</span>
-                      )}
-                      {request.category && (
-                        <Badge variant="outline" className="self-start sm:self-auto">
-                          {request.category}
-                        </Badge>
-                      )}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardFooter className="pt-2">
-                    <Button 
-                      variant="outline"
-                      className="flex items-center gap-2 ml-auto"
-                    >
-                      View Details
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <FileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium mb-1">No rejected verification requests</h3>
-                <p className="text-gray-500">No verification requests have been rejected yet</p>
-              </CardContent>
-            </Card>
-          )}
+          <Card>
+            <CardContent className="p-6 text-center">
+              <FileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+              <h3 className="text-lg font-medium mb-1">Rejected verifications</h3>
+              <p className="text-gray-500">This section will show rejected verification requests</p>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -30,7 +30,16 @@ export const useProtectedRoute = (options: UseProtectedRouteOptions = {}) => {
       return;
     }
 
-    // Check if user's status requires redirection
+    // Admin users get full access regardless of verification status
+    const isAdmin = user.role === 'admin' || user.email === 'reyaustine123@gmail.com';
+    
+    if (isAdmin) {
+      console.log('Admin user detected, granting full access');
+      setIsAuthorized(true);
+      return;
+    }
+
+    // Check if user's status requires redirection (for non-admin users)
     const status = user.verificationStatus;
     if (status === 'unverified') {
       navigate(`/verification/${user.id}`);

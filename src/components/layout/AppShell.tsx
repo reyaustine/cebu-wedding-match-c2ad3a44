@@ -1,8 +1,7 @@
 
 import React, { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
-import { NavBar } from "../NavBar";
-import { MobileNavBar } from "./MobileNavBar"; 
+import { MobileHeader } from "./MobileHeader";
 import { MobileTabBar } from "./MobileTabBar";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -18,22 +17,17 @@ export function AppShell({ children }: AppShellProps) {
   const fullscreenPages = ["/login", "/register", "/verification"];
   const isFullscreenPage = fullscreenPages.some(page => location.pathname.startsWith(page));
   
-  // Pages that use MobilePage component with their own navigation
-  const mobilePageRoutes = ["/suppliers", "/services", "/messages", "/profile", "/bookings"];
-  const usesMobilePageNav = mobilePageRoutes.some(route => location.pathname.startsWith(route));
+  // Show mobile header on all pages except fullscreen ones
+  const showMobileHeader = !isFullscreenPage;
   
-  // Only show bottom nav when authenticated
+  // Show bottom nav when authenticated and not on fullscreen pages
   const showBottomNav = user && !isFullscreenPage;
   
-  // Show main header on home and about pages, and when not using MobilePage nav
-  const showMainNav = !isFullscreenPage && !usesMobilePageNav && location.pathname !== "/dashboard";
-  
   return (
-    <div className="app-shell h-full w-full flex flex-col bg-slate-50">
-      {showMainNav && <NavBar />}
-      {!showMainNav && !isFullscreenPage && usesMobilePageNav && <MobileNavBar />}
+    <div className="app-shell h-full w-full flex flex-col bg-gray-50">
+      {showMobileHeader && <MobileHeader />}
       
-      <main className="app-content flex-1">
+      <main className={`app-content flex-1 overflow-y-auto ${showBottomNav ? 'pb-16' : ''}`}>
         {children}
       </main>
       

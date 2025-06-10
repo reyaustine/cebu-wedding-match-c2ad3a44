@@ -48,11 +48,28 @@ const Verification = () => {
       }
       
       try {
+        // Check if current user is admin - redirect to dashboard immediately
+        if (user && (user.role === "admin" || user.email === "reyaustine123@gmail.com")) {
+          console.log("Admin user detected, redirecting to dashboard");
+          toast.success("Welcome back, admin!");
+          navigate("/dashboard");
+          return;
+        }
+        
         const userData = await dbService.get("users", userId);
         
         if (!userData) {
           toast.error("User not found");
           navigate("/login");
+          return;
+        }
+        
+        // Additional admin check with userData
+        const isAdmin = (userData as any).role === "admin" || (userData as any).email === "reyaustine123@gmail.com";
+        if (isAdmin) {
+          console.log("Admin user detected from database, redirecting to dashboard");
+          toast.success("Welcome back, admin!");
+          navigate("/dashboard");
           return;
         }
         
@@ -136,7 +153,7 @@ const Verification = () => {
     };
     
     checkUser();
-  }, [userId, navigate, checkVerificationStatus, userRole]);
+  }, [userId, navigate, checkVerificationStatus, userRole, user]);
   
   const handlePersonalInfoSave = async (data: PersonalInfo) => {
     try {

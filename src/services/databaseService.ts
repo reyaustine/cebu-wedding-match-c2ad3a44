@@ -22,9 +22,7 @@ import {
   QuerySnapshot,
   enableNetwork,
   disableNetwork,
-  enableIndexedDbPersistence,
-  orderBy,
-  OrderByDirection
+  enableIndexedDbPersistence
 } from "firebase/firestore";
 import { errorHandler } from "./errorHandlingService";
 import { toast } from "sonner";
@@ -50,13 +48,6 @@ try {
   console.error("Error configuring persistence:", err);
 }
 
-// Query condition type that accepts both filtering and ordering
-type QueryCondition = {
-  field: string;
-  operator: WhereFilterOp | 'asc' | 'desc';
-  value: any;
-};
-
 /**
  * Database service for Firestore operations with mobile-optimized features
  */
@@ -66,11 +57,7 @@ export const dbService = {
    */
   add: async <T extends DocumentData>(collectionName: string, data: T): Promise<string> => {
     try {
-      // Ensure collection path starts with v1/core/ if not already
-      const collectionPath = collectionName.startsWith('v1/core/') ? 
-        collectionName : `v1/core/${collectionName}`;
-      
-      const collectionRef = collection(db, collectionPath);
+      const collectionRef = collection(db, collectionName);
       const docRef = await addDoc(collectionRef, {
         ...data,
         createdAt: data.createdAt || new Date(),
@@ -97,11 +84,7 @@ export const dbService = {
    */
   set: async <T extends DocumentData>(collectionName: string, id: string, data: T): Promise<void> => {
     try {
-      // Ensure collection path starts with v1/core/ if not already
-      const collectionPath = collectionName.startsWith('v1/core/') ? 
-        collectionName : `v1/core/${collectionName}`;
-      
-      const docRef = doc(db, collectionPath, id);
+      const docRef = doc(db, collectionName, id);
       await setDoc(docRef, {
         ...data,
         updatedAt: data.updatedAt || new Date()
@@ -119,11 +102,7 @@ export const dbService = {
    */
   get: async <T extends DocumentData>(collectionName: string, id: string): Promise<T | null> => {
     try {
-      // Ensure collection path starts with v1/core/ if not already
-      const collectionPath = collectionName.startsWith('v1/core/') ? 
-        collectionName : `v1/core/${collectionName}`;
-      
-      const docRef = doc(db, collectionPath, id);
+      const docRef = doc(db, collectionName, id);
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
@@ -155,11 +134,7 @@ export const dbService = {
    */
   update: async <T extends DocumentData>(collectionName: string, id: string, data: Partial<T>): Promise<void> => {
     try {
-      // Ensure collection path starts with v1/core/ if not already
-      const collectionPath = collectionName.startsWith('v1/core/') ? 
-        collectionName : `v1/core/${collectionName}`;
-      
-      const docRef = doc(db, collectionPath, id);
+      const docRef = doc(db, collectionName, id);
       await updateDoc(docRef, {
         ...data,
         updatedAt: new Date()
@@ -177,11 +152,7 @@ export const dbService = {
    */
   delete: async (collectionName: string, id: string): Promise<void> => {
     try {
-      // Ensure collection path starts with v1/core/ if not already
-      const collectionPath = collectionName.startsWith('v1/core/') ? 
-        collectionName : `v1/core/${collectionName}`;
-      
-      const docRef = doc(db, collectionPath, id);
+      const docRef = doc(db, collectionName, id);
       await deleteDoc(docRef);
     } catch (error) {
       errorHandler.handle(error, { 
@@ -192,35 +163,16 @@ export const dbService = {
   },
 
   /**
-   * Query documents in a collection with proper where conditions
+   * Query documents in a collection
    */
-  query: async <T extends DocumentData>(
-    collectionPath: string, 
-    ...conditions: QueryCondition[]
-  ): Promise<T[]> => {
+  query: async <T extends DocumentData>
+    (collectionPath: string, ...queryConstraints: QueryConstraint[]): Promise<T[]> => {
     try {
-      // Ensure collection path starts with v1/core/ if not already
-      const fullPath = collectionPath.startsWith('v1/core/') ? 
-        collectionPath : `v1/core/${collectionPath}`;
-      
-      const collectionRef = collection(db, fullPath);
-      
-      // Separate where conditions from orderBy conditions
-      const queryConstraints: QueryConstraint[] = [];
-      
-      conditions.forEach(condition => {
-        if (condition.operator === 'asc' || condition.operator === 'desc') {
-          // Handle orderBy condition
-          queryConstraints.push(orderBy(condition.field, condition.operator));
-        } else if (condition.field && condition.operator) {
-          // Handle where condition
-          queryConstraints.push(where(condition.field, condition.operator, condition.value));
-        }
-      });
-      
+      const collectionRef = collection(db, collectionPath);
       const q = query(collectionRef, ...queryConstraints);
       const querySnapshot = await getDocs(q);
       
+      // Fix the type conversion issue by using a proper type assertion
       return querySnapshot.docs.map(doc => ({
         ...(doc.data() as T),
         id: doc.id
@@ -238,11 +190,7 @@ export const dbService = {
    */
   getAll: async <T extends DocumentData>(collectionName: string): Promise<T[]> => {
     try {
-      // Ensure collection path starts with v1/core/ if not already
-      const collectionPath = collectionName.startsWith('v1/core/') ? 
-        collectionName : `v1/core/${collectionName}`;
-      
-      const collectionRef = collection(db, collectionPath);
+      const collectionRef = collection(db, collectionName);
       const querySnapshot = await getDocs(collectionRef);
       
       // Fix the type conversion issue by using a proper type assertion
@@ -263,11 +211,7 @@ export const dbService = {
    */
   exists: async (collectionName: string, id: string): Promise<boolean> => {
     try {
-      // Ensure collection path starts with v1/core/ if not already
-      const collectionPath = collectionName.startsWith('v1/core/') ? 
-        collectionName : `v1/core/${collectionName}`;
-      
-      const docRef = doc(db, collectionPath, id);
+      const docRef = doc(db, collectionName, id);
       const docSnap = await getDoc(docRef);
       return docSnap.exists();
     } catch (error) {
@@ -283,22 +227,14 @@ export const dbService = {
    * Get collection reference
    */
   getCollectionRef: (collectionName: string) => {
-    // Ensure collection path starts with v1/core/ if not already
-    const collectionPath = collectionName.startsWith('v1/core/') ? 
-      collectionName : `v1/core/${collectionName}`;
-    
-    return collection(db, collectionPath);
+    return collection(db, collectionName);
   },
 
   /**
    * Get document reference
    */
   getDocRef: (collectionName: string, id: string) => {
-    // Ensure collection path starts with v1/core/ if not already
-    const collectionPath = collectionName.startsWith('v1/core/') ? 
-      collectionName : `v1/core/${collectionName}`;
-    
-    return doc(db, collectionPath, id);
+    return doc(db, collectionName, id);
   },
 
   /**

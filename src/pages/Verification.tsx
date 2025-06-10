@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
@@ -8,7 +9,6 @@ import {
   ServiceInfo, 
   saveUserVerificationData, 
   submitVerificationForReview, 
-  getUserVerificationData,
   UserRole 
 } from "@/services/authService";
 import { PersonalInfoForm } from "@/components/verification/PersonalInfoForm";
@@ -18,9 +18,9 @@ import { ReviewInfoForm } from "@/components/verification/ReviewInfoForm";
 import { VerificationContainer } from "@/components/verification/VerificationContainer";
 import { toast } from "sonner";
 import { dbService } from "@/services/databaseService";
+import { where } from "firebase/firestore";
 
 interface VerificationData {
-  id?: string;
   personalInfo?: PersonalInfo;
   businessInfo?: BusinessInfo;
   serviceInfo?: ServiceInfo;
@@ -49,7 +49,7 @@ const Verification = () => {
       }
       
       try {
-        const userData = await dbService.get("v1/core/users", userId);
+        const userData = await dbService.get("users", userId);
         
         if (!userData) {
           toast.error("User not found");
@@ -70,43 +70,17 @@ const Verification = () => {
         
         setUserRole((userData as { role: UserRole }).role);
         
-        // Load existing verification data
         try {
-          console.log("Loading existing verification data for user:", userId);
-          const verificationData = await getUserVerificationData(userId);
+          const verifications = await dbService.query<VerificationData>(
+            "userVerifications",
+            where("userId", "==", userId)
+          );
           
-          if (verificationData) {
-            console.log("Found existing verification data:", verificationData);
-            
-            if (verificationData.personalInfo) {
-              setPersonalInfo(verificationData.personalInfo);
-              console.log("Loaded personal info:", verificationData.personalInfo);
-            }
-            if (verificationData.businessInfo) {
-              setBusinessInfo(verificationData.businessInfo);
-              console.log("Loaded business info:", verificationData.businessInfo);
-            }
-            if (verificationData.serviceInfo) {
-              setServiceInfo(verificationData.serviceInfo);
-              console.log("Loaded service info:", verificationData.serviceInfo);
-            }
-            
-            // Determine the current step based on completed data
-            if (userRole === "client") {
-              if (verificationData.personalInfo) {
-                setCurrentStep(2); // Go to review step
-              }
-            } else {
-              if (verificationData.serviceInfo) {
-                setCurrentStep(4); // Go to review step
-              } else if (verificationData.businessInfo) {
-                setCurrentStep(3); // Go to service info step
-              } else if (verificationData.personalInfo) {
-                setCurrentStep(2); // Go to business info step
-              }
-            }
-          } else {
-            console.log("No existing verification data found");
+          if (verifications && verifications.length > 0) {
+            const data = verifications[0];
+            if (data.personalInfo) setPersonalInfo(data.personalInfo);
+            if (data.businessInfo) setBusinessInfo(data.businessInfo);
+            if (data.serviceInfo) setServiceInfo(data.serviceInfo);
           }
         } catch (error) {
           console.error("Error fetching verification data:", error);
@@ -120,7 +94,7 @@ const Verification = () => {
     };
     
     checkUser();
-  }, [userId, navigate, checkVerificationStatus, userRole]);
+  }, [userId, navigate, checkVerificationStatus]);
   
   const handlePersonalInfoSave = async (data: PersonalInfo) => {
     try {

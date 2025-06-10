@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { dbService } from "@/services/databaseService";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { where } from "firebase/firestore";
 
 interface Booking {
   id: string;
@@ -41,7 +43,7 @@ export const ClientDashboard = () => {
           // Try to fetch from database if it exists
           fetchedBookings = await dbService.query<Booking>(
             "bookings",
-            { field: "userId", operator: "==", value: user.id }
+            where("userId", "==", user.id)
           );
         } catch (error) {
           console.log("Using mock data instead:", error);

@@ -38,7 +38,7 @@ import { Calendar, MessageSquare, CheckCircle, XCircle, Info } from "lucide-reac
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Timestamp } from "firebase/firestore";
+import { where, orderBy, Timestamp } from "firebase/firestore";
 import { Link } from "react-router-dom";
 
 export const SupplierBookings = () => {
@@ -56,8 +56,8 @@ export const SupplierBookings = () => {
         setIsLoading(true);
         const bookingsData = await dbService.query<Booking>(
           'bookings',
-          { field: 'supplierId', operator: '==', value: user.id },
-          { field: 'createdAt', operator: 'desc', value: null }
+          where('supplierId', '==', user.id),
+          orderBy('createdAt', 'desc')
         );
         
         // Convert timestamps to Date objects

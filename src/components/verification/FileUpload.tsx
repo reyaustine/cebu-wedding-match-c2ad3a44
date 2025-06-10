@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Upload, XCircle, CheckCircle2, Loader2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { storageService } from "@/services/storageService";
@@ -26,24 +26,6 @@ export const FileUpload = ({
   const [fileName, setFileName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Extract filename from existing URL and initialize states
-  useEffect(() => {
-    if (existingUrl) {
-      setFileUrl(existingUrl);
-      // Extract filename from URL
-      try {
-        const url = new URL(existingUrl);
-        const pathname = decodeURIComponent(url.pathname);
-        const filename = pathname.split('/').pop() || '';
-        // Remove the timestamp prefix if it exists (format: fileType_timestamp)
-        const cleanFilename = filename.replace(new RegExp(`^${fileType}_\\d+_?`), '');
-        setFileName(cleanFilename || `${fileType} file`);
-      } catch {
-        setFileName(`${fileType} file`);
-      }
-    }
-  }, [existingUrl, fileType]);
-  
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -67,7 +49,7 @@ export const FileUpload = ({
     
     try {
       // Upload to Firebase Storage
-      const path = `verification/${userId}/${fileType}_${Date.now()}_${file.name}`;
+      const path = `verification/${userId}/${fileType}_${Date.now()}`;
       
       console.log("Uploading file to path:", path);
       console.log("File type:", file.type);

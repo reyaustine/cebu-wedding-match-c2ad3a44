@@ -10,9 +10,8 @@ import {
   reauthenticateWithCredential,
   updatePassword
 } from "firebase/auth";
-import { auth } from "@/config/firebase";
-import { dbService } from "./databaseService";
-import { serverTimestamp, Timestamp } from "firebase/firestore";
+import { auth, db } from "@/config/firebase";
+import { collection, doc, getDoc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 
 export type UserRole = 'client' | 'supplier' | 'planner' | 'admin';
 
@@ -97,9 +96,9 @@ export const updateUserPassword = async (currentPassword: string, newPassword: s
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
   return auth.onAuthStateChanged(async (firebaseUser) => {
     if (firebaseUser) {
-      const userDoc = await dbService.get(`v1/core/users/${firebaseUser.uid}`, firebaseUser.uid);
-      if (userDoc) {
-        const userData = userDoc as Omit<User, 'id'>;
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as Omit<User, 'id'>;
         const user: User = {
           id: firebaseUser.uid,
           email: firebaseUser.email!,
@@ -126,10 +125,11 @@ export const onAuthStateChange = (callback: (user: User | null) => void) => {
 // Get user verification status
 export const getUserVerificationStatus = async (userId: string): Promise<string> => {
   try {
-    const userDoc = await dbService.get(`v1/core/users`, userId);
+    const userDocRef = doc(db, 'users', userId);
+    const userDocSnap = await getDoc(userDocRef);
     
-    if (userDoc) {
-      const userData = userDoc as User;
+    if (userDocSnap.exists()) {
+      const userData = userDocSnap.data() as User;
       return userData.verificationStatus || 'unverified';
     } else {
       console.warn(`User document not found for user ID: ${userId}`);
@@ -149,9 +149,9 @@ export const signInWithGoogle = async (defaultRole: UserRole = "client"): Promis
     const user = result.user;
     
     // Check if user exists in database
-    const userDoc = await dbService.get(`v1/core/users`, user.uid);
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
     
-    if (!userDoc) {
+    if (!userDoc.exists()) {
       // Create user document
       const newUser: Omit<User, 'id'> = {
         email: user.email!,
@@ -162,7 +162,7 @@ export const signInWithGoogle = async (defaultRole: UserRole = "client"): Promis
         verificationStatus: 'unverified',
         createdAt: new Date(),
       };
-      await dbService.set(`v1/core/users`, user.uid, newUser);
+      await setDoc(doc(db, 'users', user.uid), newUser);
       
       return {
         id: user.uid,
@@ -174,7 +174,7 @@ export const signInWithGoogle = async (defaultRole: UserRole = "client"): Promis
         verificationStatus: 'unverified',
       };
     } else {
-      const userData = userDoc as Omit<User, 'id'>;
+      const userData = userDoc.data() as Omit<User, 'id'>;
       return {
         id: user.uid,
         email: user.email!,
@@ -205,7 +205,7 @@ const createUserDocument = async (user: any, firstName: string, lastName: string
     verificationStatus: 'unverified',
     createdAt: new Date(),
   };
-  await dbService.set(`v1/core/users`, user.uid, newUser);
+  await setDoc(doc(db, 'users', user.uid), newUser);
   return newUser;
 };
 
@@ -245,10 +245,10 @@ export const loginUser = async (email: string, password: string): Promise<User> 
     const user = userCredential.user;
     
     // Get user document from Firestore
-    const userDoc = await dbService.get(`v1/core/users`, user.uid);
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
     
-    if (userDoc) {
-      const userData = userDoc as Omit<User, 'id'>;
+    if (userDoc.exists()) {
+      const userData = userDoc.data() as Omit<User, 'id'>;
       return {
         id: user.uid,
         email: user.email!,
@@ -297,29 +297,37 @@ export const saveUserVerificationData = async (
   data: PersonalInfo | BusinessInfo | ServiceInfo
 ) => {
   try {
-    // Check if user already has verification data
-    const existingVerification = await dbService.query(
-      `v1/core/userVerifications`,
-      ...[{ field: "userId", operator: "==", value: userId } as any]
-    );
+    const userVerificationRef = doc(collection(db, 'userVerifications'));
     
-    const verificationData = {
-      userId,
-      [dataType]: data,
-      updatedAt: new Date(),
-      status: 'draft'
-    };
-
-    if (existingVerification && existingVerification.length > 0) {
-      // Update existing verification data
-      const verificationId = existingVerification[0].id;
-      await dbService.update(`v1/core/userVerifications`, verificationId, verificationData);
+    // Check if user already has verification data
+    const userVerifications = await collection(db, 'userVerifications');
+    const userVerificationQuery = await userVerifications;
+    const existingDocs = await userVerificationQuery;
+    
+    // If user has existing verification data, update it
+    if (existingDocs) {
+      await setDoc(
+        userVerificationRef, 
+        { 
+          userId, 
+          [dataType]: data, 
+          updatedAt: new Date(),
+          status: 'draft'
+        },
+        { merge: true }
+      );
     } else {
       // Create new verification data
-      await dbService.add(`v1/core/userVerifications`, {
-        ...verificationData,
-        createdAt: new Date()
-      });
+      await setDoc(
+        userVerificationRef,
+        {
+          userId,
+          [dataType]: data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          status: 'draft'
+        }
+      );
     }
     
     return true;
@@ -329,43 +337,30 @@ export const saveUserVerificationData = async (
   }
 };
 
-// Get user verification data
-export const getUserVerificationData = async (userId: string) => {
-  try {
-    const verifications = await dbService.query(
-      `v1/core/userVerifications`,
-      ...[{ field: "userId", operator: "==", value: userId } as any]
-    );
-    
-    if (verifications && verifications.length > 0) {
-      return verifications[0];
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error fetching verification data:', error);
-    return null;
-  }
-};
-
 // Submit verification for review
 export const submitVerificationForReview = async (userId: string, userRole: UserRole) => {
   try {
     // Update user verification status to 'onboarding'
-    await dbService.update(`v1/core/users`, userId, { verificationStatus: 'onboarding' });
-    
-    // Update verification data status to 'submitted'
-    const existingVerification = await dbService.query(
-      `v1/core/userVerifications`,
-      ...[{ field: "userId", operator: "==", value: userId } as any]
+    await setDoc(
+      doc(db, 'users', userId),
+      { verificationStatus: 'onboarding' },
+      { merge: true }
     );
     
-    if (existingVerification && existingVerification.length > 0) {
-      const verificationId = existingVerification[0].id;
-      await dbService.update(`v1/core/userVerifications`, verificationId, {
-        status: 'submitted',
-        submittedAt: new Date()
-      });
+    // Update verification data status to 'submitted'
+    const userVerifications = await collection(db, 'userVerifications');
+    const userVerificationQuery = await userVerifications;
+    const existingDocs = await userVerificationQuery;
+    
+    if (existingDocs) {
+      await setDoc(
+        doc(db, 'userVerifications', existingDocs.id),
+        {
+          status: 'submitted',
+          submittedAt: new Date()
+        },
+        { merge: true }
+      );
     }
     
     return true;
